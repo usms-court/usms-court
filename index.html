@@ -3,364 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USMS · Генератор постановлений</title>
-    <!-- Подключение внешнего файла стилей -->
+    <title>USMS Workspace</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Подключение внешнего файла скриптов (с defer для загрузки после HTML) -->
     <script src="app.js" defer></script>
 </head>
 <body>
-
-    <!-- ===== LOADER ===== -->
-    <div id="loader">
-        <div class="spinner"></div>
-        <div class="loader-text">Загрузка USMS</div>
-    </div>
-
-    <!-- ===== ФОН ===== -->
-    <div class="bg-text-wrapper">
-        <div class="bg-text-line">USMS</div>
-        <div class="bg-text-line">MARSHALS</div>
-        <div class="bg-text-line">ORDER</div>
-        <div class="bg-text-line">JUSTICE</div>
-        <div class="bg-text-line">LAW</div>
-        <div class="bg-text-line">FEDERAL</div>
-    </div>
-
-    <!-- ===== КОНТЕЙНЕР ===== -->
-    <div class="container" id="appContainer">
-        <div class="top-bar">
-            <div class="main-title">
-                <h1>⚖️ United States Marshals Service <span>Генератор постановлений v2.0</span></h1>
-                <div class="subhead">Разработано Dante DeRosse, при поддержке судебного корпуса. Нашли баг? обратитесь в discord - .dantezzz.</div>
-            </div>
-            <div class="top-right-btns">
-                <button class="help-btn" id="openHelpBtn">?</button>
-                <button class="settings-btn" id="openSettingsBtn">⚙️ Настройки</button>
-            </div>
-        </div>
-
-        <!-- ===== PROGRESS BAR ===== -->
-        <div class="progress-container">
-            <div class="progress-track">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-            <div class="progress-label">
-                <span>Заполнение</span>
-                <span class="pct" id="progressPct">0%</span>
-            </div>
-        </div>
-
-        <!-- ===== ОСНОВНЫЕ ВКЛАДКИ ===== -->
-        <div class="tabs" id="tabsContainer">
-            <button class="tab-btn active" data-tab="decree">📜 ПОСТАНОВЛЕНИЕ</button>
-            <button class="tab-btn" data-tab="wanted">🔍 РОЗЫСК</button>
-            <button class="tab-btn" data-tab="final">📋 ИТОГОВОЕ</button>
-        </div>
-
-        <div class="two-columns" id="mainContent">
-            <div class="left-column">
-                <!-- ===== РАЗДЕЛ ПОСТАНОВЛЕНИЕ ===== -->
-                <div id="decreeSection">
-                    <div class="sub-tabs" id="decreeSubTabs">
-                        <button class="sub-tab-btn active" data-sub="decree-main">📜 Постановление</button>
-                        <button class="sub-tab-btn" data-sub="decree-interrogation">🎙️ Допрос</button>
-                    </div>
-
-                    <div id="decreeMainSection">
-                        <div class="section">
-                            <div class="section-title">
-                                📋 Основные данные
-                                <span class="validation-badge partial" id="decreeMainValidation">⏳ Частично</span>
-                            </div>
-                            <div class="row">
-                                <label>Порядковый номер <span class="required">*</span></label>
-                                <input type="text" id="orderNumber" value="" placeholder="600" data-required="true">
-                                <div class="field-error" id="orderNumberError">Обязательное поле</div>
-                            </div>
-                            <div class="row">
-                                <label>Имя Фамилия судьи <span class="required">*</span></label>
-                                <input type="text" id="judgeName" value="" placeholder="Dante DeRosse" data-required="true">
-                                <div class="field-error" id="judgeNameError">Обязательное поле</div>
-                            </div>
-                            <div class="row">
-                                <label>Должность судьи <span class="required">*</span></label>
-                                <select id="judgeRank" data-required="true">
-                                    <option value="окружного судьи">Окружной судья</option>
-                                    <option value="председателя окружного суда">Председатель окружного суда</option>
-                                    <option value="верховного Судьи">Верховный судья</option>
-                                </select>
-                            </div>
-                            <div class="row">
-                                <label>Тип суда <span class="required">*</span></label>
-                                <select id="courtType" data-required="true">
-                                    <option value="окружной">Окружной</option>
-                                    <option value="кассационный">Кассационный</option>
-                                    <option value="апелляционный">Апелляционный</option>
-                                    <option value="верховный">Верховный</option>
-                                </select>
-                            </div>
-                            <div class="row">
-                                <label>Номер искового заявления <span class="required">*</span></label>
-                                <input type="text" id="caseId" value="" placeholder="2600" data-required="true">
-                                <div class="field-error" id="caseIdError">Обязательное поле</div>
-                            </div>
-                            <div class="row">
-                                <label>Кому направляется <span class="required">*</span></label>
-                                <select id="factionSelect" data-required="true">
-                                    <option value="LSPD">LSPD</option>
-                                    <option value="LSSD">LSSD</option>
-                                    <option value="SANG">SANG</option>
-                                    <option value="SASPA">SASPA</option>
-                                    <option value="FIB">FIB</option>
-                                    <option value="GOV">GOV</option>
-                                    <option value="EMS LS">EMS LS</option>
-                                    <option value="EMS SS">EMS SS</option>
-                                    <option value="Гражданину" selected>Гражданин</option>
-                                </select>
-                            </div>
-                            <div class="row" id="citizenRow">
-                                <label>Имя Фамилия (гражданина) <span class="required">*</span></label>
-                                <input type="text" id="citizenName" value="" placeholder="Dante DeRosse" data-required="true">
-                                <div class="field-error" id="citizenNameError">Обязательное поле</div>
-                            </div>
-                        </div>
-
-                        <div class="section" style="flex:1;">
-                            <div class="section-title">
-                                📌 Действия к исполнению
-                                <span class="count" id="actionsCount">0</span>
-                                <span class="validation-badge partial" id="actionsValidation">⏳ Требуется</span>
-                            </div>
-                            <div id="obligationsContainer"></div>
-                            <button class="btn btn-success" id="addObligationBtn" style="width:100%; justify-content:center;">➕ Добавить действие</button>
-                        </div>
-                    </div>
-
-                    <div id="decreeInterrogationSection" style="display:none;">
-                        <div class="section">
-                            <div class="section-title">
-                                🎙️ Данные допроса
-                                <span class="validation-badge partial" id="interrogationValidation">⏳ Частично</span>
-                            </div>
-                            <div class="row">
-                                <label>Имя допрашиваемого <span class="required">*</span></label>
-                                <input type="text" id="interrogationName" value="" placeholder="Имя Фамилия" data-required="true">
-                                <div class="field-error" id="interrogationNameError">Обязательное поле</div>
-                            </div>
-                            <div class="row">
-                                <label>Паспорт <span class="required">*</span></label>
-                                <input type="text" id="interrogationPassport" value="" placeholder="серия номер" data-required="true">
-                                <div class="field-error" id="interrogationPassportError">Обязательное поле</div>
-                            </div>
-                            <div class="row">
-                                <label>Дата допроса <span class="required">*</span></label>
-                                <input type="date" id="interrogationDate" value="" data-required="true">
-                                <div class="field-error" id="interrogationDateError">Обязательное поле</div>
-                            </div>
-                            <div class="row">
-                                <label>Время начала</label>
-                                <input type="time" id="interrogationTimeStart" value="">
-                            </div>
-                            <div class="row">
-                                <label>Время окончания</label>
-                                <input type="time" id="interrogationTimeEnd" value="">
-                            </div>
-                            <div class="row">
-                                <label>Место проведения</label>
-                                <input type="text" id="interrogationPlace" value="" placeholder="Отдел полиции, каб. 101">
-                            </div>
-                            <div class="row">
-                                <label>Присутствующие</label>
-                                <input type="text" id="interrogationPresent" value="" placeholder="Адвокат, прокурор">
-                            </div>
-                            <div class="row">
-                                <label>Краткое содержание <span class="required">*</span></label>
-                                <textarea id="interrogationSummary" rows="3" placeholder="Краткое описание допроса..." data-required="true"></textarea>
-                                <div class="field-error" id="interrogationSummaryError">Обязательное поле</div>
-                            </div>
-                        </div>
-                    </div>
+    <div class="app-container">
+        <!-- Боковое меню -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo">⚖️</div>
+                <div class="brand-text">
+                    <strong>USMS Workspace</strong>
+                    <span>Federal System</span>
                 </div>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="decree">📜 Постановление</button>
+                <button class="nav-item" data-tab="wanted">🔍 Розыск</button>
+                <button class="nav-item" data-tab="settings">⚙️ Настройки профиля</button>
+            </nav>
+        </aside>
 
-                <!-- ===== РАЗДЕЛ РОЗЫСК ===== -->
-                <div id="wantedSection" style="display:none;">
-                    <div class="section">
-                        <div class="section-title">
-                            📋 Общая информация
-                            <span class="validation-badge partial" id="wantedInfoValidation">⏳ Частично</span>
+        <!-- Основная рабочая область -->
+        <main class="workspace">
+            
+            <!-- Левая колонка: Форма -->
+            <section class="editor-pane">
+                <div class="pane-header">
+                    <h2>Редактор постановления</h2>
+                    <button id="addActionBtn" class="btn btn-primary">+ Добавить действие</button>
+                </div>
+                
+                <div class="form-container">
+                    <!-- Базовые поля -->
+                    <div class="form-group-grid">
+                        <div class="input-field">
+                            <label>Номер (MSLR-№)</label>
+                            <input type="text" id="orderNum" placeholder="600" value="600">
                         </div>
-                        <div class="row">
-                            <label>Номер постановления <span class="required">*</span></label>
-                            <input type="text" id="wantedOrderNumber" value="" placeholder="600" data-required="true">
-                            <div class="field-error" id="wantedOrderNumberError">Обязательное поле</div>
+                        <div class="input-field">
+                            <label>Номер иска</label>
+                            <input type="text" id="caseNum" placeholder="2600">
                         </div>
-                        <div class="row">
-                            <label>Имя Фамилия судьи <span class="required">*</span></label>
-                            <input type="text" id="wantedJudgeName" value="" placeholder="Dante DeRosse" data-required="true">
-                            <div class="field-error" id="wantedJudgeNameError">Обязательное поле</div>
+                        <div class="input-field">
+                            <label>Тип суда</label>
+                            <select id="courtType">
+                                <option value="окружной">Окружной</option>
+                                <option value="апелляционный">Апелляционный</option>
+                                <option value="верховный">Верховный</option>
+                            </select>
                         </div>
-                        <div class="row">
-                            <label>Должность судьи <span class="required">*</span></label>
-                            <select id="wantedJudgeRank" data-required="true">
+                        <div class="input-field">
+                            <label>Судья (Имя Фамилия)</label>
+                            <input type="text" id="judgeName" placeholder="Имя Фамилия">
+                        </div>
+                        <div class="input-field">
+                            <label>Должность судьи</label>
+                            <select id="judgeRank">
                                 <option value="окружного судьи">Окружной судья</option>
-                                <option value="председателя окружного суда">Председатель окружного суда</option>
-                                <option value="верховного судьи">Верховный Судья</option>
+                                <option value="верховного судьи">Верховный судья</option>
                             </select>
                         </div>
-                        <div class="row">
-                            <label>Тип суда <span class="required">*</span></label>
-                            <select id="wantedCourtType" data-required="true">
-                                <option value="окружного суда">Окружной</option>
-                                <option value="кассационного суда">Кассационный</option>
-                                <option value="апелляционного суда">Апелляционный</option>
-                                <option value="верховного суда">Верховный</option>
+                        <div class="input-field">
+                            <label>Направляется (Фракция)</label>
+                            <select id="targetFaction">
+                                <option value="LSPD">LSPD</option>
+                                <option value="FIB">FIB</option>
+                                <option value="Гражданину">Гражданину</option>
                             </select>
                         </div>
-                        <div class="row">
-                            <label>Номер искового заявления <span class="required">*</span></label>
-                            <input type="text" id="wantedCaseId" value="" placeholder="2600" data-required="true">
-                            <div class="field-error" id="wantedCaseIdError">Обязательное поле</div>
-                        </div>
                     </div>
 
-                    <div class="section" style="flex:1;">
-                        <div class="section-title">
-                            🔍 Разыскиваемые
-                            <span class="count" id="wantedCount">0</span>
-                            <span class="validation-badge partial" id="wantedListValidation">⏳ Требуется</span>
-                        </div>
-                        <div id="wantedContainer"></div>
-                        <button class="btn btn-danger-outline" id="addWantedBtn" style="width:100%; justify-content:center;">➕ Добавить разыскиваемого</button>
-                    </div>
+                    <div class="divider">Действия к исполнению</div>
+                    
+                    <!-- Контейнер для динамических действий -->
+                    <div id="actionsList" class="actions-list"></div>
                 </div>
+            </section>
 
-                <!-- ===== РАЗДЕЛ ИТОГОВОЕ ===== -->
-                <div id="finalSection" style="display:none;">
-                    <div class="section">
-                        <div class="section-title">📋 Финальная проверка</div>
-                        <div id="finalChecklist">
-                            <div style="display:flex; flex-direction:column; gap:12px; padding:8px 0;">
-                                <div style="display:flex; align-items:center; gap:12px; padding:8px 12px; background:rgba(11,22,34,0.2); border-radius:12px; border-left:3px solid #4a6a8a;">
-                                    <span id="finalDecreeCheck" style="font-size:1.2rem;">⬜</span>
-                                    <span style="color:#8bb0cc; font-size:0.95rem;">Постановление заполнено</span>
-                                </div>
-                                <div style="display:flex; align-items:center; gap:12px; padding:8px 12px; background:rgba(11,22,34,0.2); border-radius:12px; border-left:3px solid #4a6a8a;">
-                                    <span id="finalInterrogationCheck" style="font-size:1.2rem;">⬜</span>
-                                    <span style="color:#8bb0cc; font-size:0.95rem;">Допрос заполнен</span>
-                                </div>
-                                <div style="display:flex; align-items:center; gap:12px; padding:8px 12px; background:rgba(11,22,34,0.2); border-radius:12px; border-left:3px solid #4a6a8a;">
-                                    <span id="finalWantedCheck" style="font-size:1.2rem;">⬜</span>
-                                    <span style="color:#8bb0cc; font-size:0.95rem;">Розыск заполнен</span>
-                                </div>
-                                <div style="display:flex; align-items:center; gap:12px; padding:8px 12px; background:rgba(11,22,34,0.2); border-radius:12px; border-left:3px solid #4a6a8a;">
-                                    <span id="finalActionsCheck" style="font-size:1.2rem;">⬜</span>
-                                    <span style="color:#8bb0cc; font-size:0.95rem;">Добавлено действие</span>
-                                </div>
-                                <div style="display:flex; align-items:center; gap:12px; padding:8px 12px; background:rgba(11,22,34,0.2); border-radius:12px; border-left:3px solid #4a6a8a;">
-                                    <span id="finalWantedListCheck" style="font-size:1.2rem;">⬜</span>
-                                    <span style="color:#8bb0cc; font-size:0.95rem;">Добавлен разыскиваемый</span>
-                                </div>
-                            </div>
-                        </div>
+            <!-- Правая колонка: Live Preview форума -->
+            <section class="preview-pane">
+                <div class="pane-header preview-header">
+                    <div class="preview-tabs">
+                        <button class="view-tab active" data-view="forum">Форум (GTA5RP)</button>
+                        <button class="view-tab" data-view="bbcode">BBCode</button>
                     </div>
-
-                    <div class="section" style="flex:1;">
-                        <div class="section-title">📊 Статус готовности</div>
-                        <div style="display:flex; flex-direction:column; gap:16px; padding:12px 0;">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="color:#8bb0cc;">Общий прогресс</span>
-                                <span style="font-family:'Orbitron',monospace; font-size:1.2rem; color:#b8d8f5;" id="finalProgressPct">0%</span>
-                            </div>
-                            <div style="width:100%; height:8px; background:rgba(139,176,204,0.04); border-radius:10px; overflow:hidden;">
-                                <div style="height:100%; width:0%; background:linear-gradient(90deg, rgba(139,176,204,0.1), rgba(139,176,204,0.4)); border-radius:10px; transition:width 0.6s ease;" id="finalProgressFill"></div>
-                            </div>
-                            <div style="display:flex; gap:16px; flex-wrap:wrap; padding-top:8px;">
-                                <div style="display:flex; align-items:center; gap:8px; background:rgba(11,22,34,0.2); padding:6px 14px; border-radius:20px;">
-                                    <span style="color:#3ab88a;">●</span>
-                                    <span style="font-size:0.8rem; color:#8bb0cc;" id="finalValidCount">0</span>
-                                    <span style="font-size:0.7rem; color:#4a6a8a;">/</span>
-                                    <span style="font-size:0.8rem; color:#8bb0cc;" id="finalTotalCount">0</span>
-                                </div>
-                                <div style="display:flex; align-items:center; gap:8px; background:rgba(11,22,34,0.2); padding:6px 14px; border-radius:20px;">
-                                    <span style="color:#b83a3a;">●</span>
-                                    <span style="font-size:0.8rem; color:#8bb0cc;" id="finalInvalidCount">0</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <button id="copyBtn" class="btn btn-success">Скопировать код</button>
                 </div>
-            </div>
-
-            <!-- ===== ПРАВАЯ КОЛОНКА ===== -->
-            <div class="right-column">
-                <div class="section" style="flex:1; display:flex; flex-direction:column;">
-                    <div class="section-title">📄 Результат (BBCode)</div>
-                    <div class="output-box" id="outputDisplay">Здесь будет сгенерированное постановление...</div>
+                
+                <div class="preview-content">
+                    <!-- Рендер как на форуме -->
+                    <div id="forumRender" class="gta5rp-forum-theme"></div>
+                    <!-- Сырой код -->
+                    <textarea id="bbcodeOutput" class="raw-bbcode hidden" readonly></textarea>
                 </div>
+            </section>
 
-                <div class="control-panel-fixed">
-                    <div class="section-title" style="margin-bottom:10px;">🎮 Управление</div>
-                    <div class="btn-group">
-                        <button class="btn btn-outline" id="resetTemplateBtn">↺ Сбросить</button>
-                        <button class="btn btn-success" id="copyBtn">📋 Копировать</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== МОДАЛКИ ===== -->
-    <div class="modal-overlay" id="settingsModal">
-        <div class="modal-box">
-            <div class="panel-title">
-                ⚙️ Настройки
-                <button class="close-btn" id="closeSettingsBtn">✕</button>
-            </div>
-            <div class="settings-row">
-                <label>ДОЛЖНОСТЬ <span class="required">*</span></label>
-                <input type="text" id="prosecutorPosition" value="" placeholder="Должность">
-            </div>
-            <div class="settings-row">
-                <label>ИМЯ ФАМИЛИЯ <span class="required">*</span></label>
-                <input type="text" id="prosecutorName" value="" placeholder="Имя Фамилия">
-            </div>
-            <div class="settings-row">
-                <label>ПОДПИСЬ (ТЕКСТ) <span class="required">*</span></label>
-                <textarea id="prosecutorSignature" rows="2" placeholder="Подпись"></textarea>
-            </div>
-            <div class="settings-row">
-                <label>ССЫЛКА НА ПОДПИСЬ</label>
-                <input type="text" id="prosecutorSignatureLink" value="" placeholder="https://i.imgur.com/...">
-                <div style="font-size:0.7rem; color:#6a8aa0; margin-top:2px;">После пробела ссылка автоматически подставится в шаблон</div>
-            </div>
-            <div class="settings-row">
-                <label>СПЕЦСВЯЗЬ (DISCORD) <span class="required">*</span></label>
-                <input type="text" id="prosecutorDiscord" value="" placeholder="Discord">
-            </div>
-            <button class="settings-save-btn" id="saveSettingsBtn">💾 Сохранить</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay help-modal" id="helpModal">
-        <div class="modal-box">
-            <div class="panel-title">
-                ❓ Как пользоваться генератором
-                <button class="close-btn" id="closeHelpBtn">✕</button>
-            </div>
-            <div class="help-content">
-                <h3>📌 Постановление</h3>
-                <ul>
-                    <li>Заполните <span class="highlight">Основные данные</span> — номер, судью, фракцию и т.д.</li>
-                    <li>Добавляйте <span class="highlight">Действия к исполнению</span> — нажмите <span class="tag">➕ Добавить действие</span></li>
-                    <li>В действии выберите <span class="highlight">тип</span> (Уведомление, Боди-Камера, Запрет, Отстранение)</li>
-                    <li>Для <span class="highlight">Боди-Камеры</span> укажите дату и интервал времени</li>
-                    <li>Для <span class="highlight">Отстранения</span> укажите руководство</li>
-                    <li>Кликните по действию — оно <span class="highlight">развернётся</span> для редактирования</li>
-                    <li><span class="highlight">Перетаскивайте</span> действия мышкой, чтобы изменить их порядок</li>
-                </ul>
-            </div>
-        </div>
+        </main>
     </div>
 </body>
 </html>
