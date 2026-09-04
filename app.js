@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Единое состояние приложения
+    // 1. Состояние приложения
     const state = {
         currentTab: 'decree',
         settings: {
@@ -20,32 +20,23 @@ document.addEventListener('DOMContentLoaded', () => {
             obligations: []
         },
         interrogation: {
-            name: '',
-            passport: '',
-            date: '',
-            timeStart: '',
-            timeEnd: '',
-            place: '',
-            present: '',
-            summary: ''
+            name: '', passport: '', date: '', timeStart: '', timeEnd: '', place: '', present: '', summary: ''
         },
         wanted: {
-            orderNumber: '600',
-            caseId: '',
-            judgeName: '',
-            judgeRank: 'окружного судьи',
-            courtType: 'окружного суда',
+            orderNumber: '600', caseId: '', judgeName: '', judgeRank: 'окружного судьи', courtType: 'окружного суда',
             wantedList: []
         }
     };
 
     // 2. DOM-элементы
-    const navItems = document.querySelectorAll('.nav-item');
-    const tabContents = document.querySelectorAll('.tab-content');
-    const viewTabs = document.querySelectorAll('.view-tab');
-    const forumRender = document.getElementById('forumRender');
-    const bbcodeOutput = document.getElementById('bbcodeOutput');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    const previewModal = document.getElementById('previewModal');
+    const openPreviewBtn = document.getElementById('openPreviewBtn');
+    const closePreviewBtn = document.getElementById('closePreviewBtn');
     const copyBtn = document.getElementById('copyBtn');
+    const modalCopyBtn = document.getElementById('modalCopyBtn');
+    const forumRender = document.getElementById('forumRender');
     const resetAllBtn = document.getElementById('resetAllBtn');
 
     const obligationsContainer = document.getElementById('obligationsContainer');
@@ -55,44 +46,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const factionSelect = document.getElementById('factionSelect');
     const citizenRow = document.getElementById('citizenRow');
 
-    // 3. Переключение разделов в левом меню
-    navItems.forEach(btn => {
+    // 3. Переключение верхних вкладок
+    tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const target = btn.dataset.tab;
             state.currentTab = target;
 
-            navItems.forEach(b => b.classList.remove('active'));
-            tabContents.forEach(t => t.classList.remove('active'));
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabPanes.forEach(p => p.classList.remove('active'));
 
             btn.classList.add('active');
-            const targetEl = document.getElementById(`tab-${target}`);
-            if (targetEl) targetEl.classList.add('active');
-
-            render();
+            const targetPane = document.getElementById(`tab-${target}`);
+            if (targetPane) targetPane.classList.add('active');
         });
     });
 
-    // 4. Переключение видов превью (Форум / BBCode)
-    viewTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            viewTabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            if (tab.dataset.view === 'forum') {
-                forumRender.classList.remove('hidden');
-                bbcodeOutput.classList.add('hidden');
-            } else {
-                forumRender.classList.add('hidden');
-                bbcodeOutput.classList.remove('hidden');
-            }
-        });
-    });
-
-    // Переключение поля гражданина
+    // Скрытие поля гражданина
     factionSelect.addEventListener('change', () => {
         citizenRow.classList.toggle('hidden', factionSelect.value !== 'Гражданину');
     });
 
-    // 5. Функции форматирования дат и сроков
+    // 4. Логика модального окна предпросмотра
+    function openPreview() {
+        renderForumPreview();
+        previewModal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closePreview() {
+        previewModal.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    openPreviewBtn.addEventListener('click', openPreview);
+    closePreviewBtn.addEventListener('click', closePreview);
+    previewModal.addEventListener('click', (e) => {
+        if (e.target === previewModal) closePreview();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && previewModal.classList.contains('open')) closePreview();
+    });
+
+    // 5. Вспомогательные функции
     function getMoscowDate() {
         const now = new Date();
         const moscowTime = new Date(now.getTime() + (3 * 60 + now.getTimezoneOffset()) * 60000);
@@ -121,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return ranks[faction] || 'Руководства';
     }
 
-    // 6. Генераторы сырого BBCode
+    // 6. Генерация BBCode
     function buildDecreeBBCode() {
         const d = state.decree;
         const s = state.settings;
@@ -151,7 +145,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('\n\n');
 
         if (!obligationsText) obligationsText = '[I]Действия к исполнению не добавлены...[/I]';
-
         const target = d.factionSelect === 'Гражданину' ? `Гражданину ${d.citizenName || '—'}` : d.factionSelect;
 
         return `[TABLE width="100%"]
@@ -249,7 +242,13 @@ ${sig}[/RIGHT]
 ${inter.summary || '—'}[/CENTER]`;
     }
 
-    // 7. Парсер BBCode в HTML для XenForo (GTA5RP)
+    function getCurrentBBCode() {
+        if (state.currentTab === 'wanted') return buildWantedBBCode();
+        if (state.currentTab === 'interrogation') return buildInterrogationBBCode();
+        return buildDecreeBBCode();
+    }
+
+    // 7. Парсинг для отображения в предпросмотре
     function parseBBCodeToHTML(bbcode) {
         let html = bbcode;
         html = html.replace(/\[B\]([\s\S]*?)\[\/B\]/gi, '<strong>$1</strong>');
@@ -270,22 +269,11 @@ ${inter.summary || '—'}[/CENTER]`;
         return html;
     }
 
-    // 8. Главный рендер
-    function render() {
-        let currentCode = '';
-        if (state.currentTab === 'wanted') {
-            currentCode = buildWantedBBCode();
-        } else if (state.currentTab === 'interrogation') {
-            currentCode = buildInterrogationBBCode();
-        } else {
-            currentCode = buildDecreeBBCode();
-        }
-
-        bbcodeOutput.value = currentCode;
-        forumRender.innerHTML = parseBBCodeToHTML(currentCode);
+    function renderForumPreview() {
+        forumRender.innerHTML = parseBBCodeToHTML(getCurrentBBCode());
     }
 
-    // 9. Отрисовка списка действий (Постановление)
+    // 8. Динамические списки
     function renderObligationsCards() {
         obligationsContainer.innerHTML = '';
         state.decree.obligations.forEach((item, index) => {
@@ -295,23 +283,23 @@ ${inter.summary || '—'}[/CENTER]`;
             let extraInputs = '';
             if (item.type === 'Боди-Камера') {
                 extraInputs = `
-                    <div class="form-grid">
-                        <div class="input-field"><label>Дата</label><input type="date" class="ob-date" value="${item.date || ''}"></div>
-                        <div class="input-field"><label>С (время)</label><input type="time" class="ob-time-from" value="${item.timeFrom || ''}"></div>
-                        <div class="input-field"><label>По (время)</label><input type="time" class="ob-time-to" value="${item.timeTo || ''}"></div>
+                    <div class="form-grid" style="margin-bottom:0;">
+                        <div class="field"><label>Дата</label><input type="date" class="ob-date" value="${item.date || ''}"></div>
+                        <div class="field"><label>С (время)</label><input type="time" class="ob-time-from" value="${item.timeFrom || ''}"></div>
+                        <div class="field"><label>По (время)</label><input type="time" class="ob-time-to" value="${item.timeTo || ''}"></div>
                     </div>`;
             } else if (item.type === 'Отстранение') {
                 extraInputs = `
-                    <div class="input-field"><label>Имя Фамилия руководства</label><input type="text" class="ob-sup" placeholder="Dante DeRosse" value="${item.supervisor || ''}"></div>`;
+                    <div class="field" style="margin-top:10px;"><label>Имя Фамилия руководства</label><input type="text" class="ob-sup" placeholder="Dante DeRosse" value="${item.supervisor || ''}"></div>`;
             }
 
             card.innerHTML = `
                 <div class="item-card-header">
-                    <span class="item-card-title">#${index + 1} Действие к исполнению</span>
-                    <button class="del-card-btn" title="Удалить">✕</button>
+                    <span class="card-num">#${index + 1} Действие к исполнению</span>
+                    <button class="del-btn">✕</button>
                 </div>
-                <div class="form-grid">
-                    <div class="input-field">
+                <div class="form-grid" style="margin-bottom:8px;">
+                    <div class="field">
                         <label>Тип действия</label>
                         <select class="ob-type">
                             <option value="Уведомление" ${item.type === 'Уведомление' ? 'selected' : ''}>Уведомление</option>
@@ -320,17 +308,17 @@ ${inter.summary || '—'}[/CENTER]`;
                             <option value="Отстранение" ${item.type === 'Отстранение' ? 'selected' : ''}>Отстранение</option>
                         </select>
                     </div>
-                    <div class="input-field">
+                    <div class="field">
                         <label>Фракция</label>
                         <select class="ob-faction">
                             ${['LSPD', 'LSSD', 'SANG', 'SASPA', 'FIB', 'GOV', 'EMS LS', 'EMS SS', 'Гражданин'].map(f => `<option value="${f}" ${item.faction === f ? 'selected' : ''}>${f}</option>`).join('')}
                         </select>
                     </div>
-                    <div class="input-field">
+                    <div class="field">
                         <label>Имя Фамилия</label>
                         <input type="text" class="ob-name" placeholder="Dante DeRosse" value="${item.name || ''}">
                     </div>
-                    <div class="input-field">
+                    <div class="field">
                         <label>Паспорт</label>
                         <input type="text" class="ob-pass" placeholder="380938" value="${item.passport || ''}">
                     </div>
@@ -338,40 +326,24 @@ ${inter.summary || '—'}[/CENTER]`;
                 ${extraInputs}
             `;
 
-            // Слушатели на поля карточки
-            card.querySelector('.del-card-btn').addEventListener('click', () => {
+            card.querySelector('.del-btn').addEventListener('click', () => {
                 state.decree.obligations.splice(index, 1);
                 renderObligationsCards();
-                render();
             });
-
             card.querySelector('.ob-type').addEventListener('change', (e) => {
                 state.decree.obligations[index].type = e.target.value;
                 renderObligationsCards();
-                render();
             });
-
-            card.querySelector('.ob-faction').addEventListener('change', (e) => {
-                state.decree.obligations[index].faction = e.target.value;
-                render();
-            });
-
-            card.querySelector('.ob-name').addEventListener('input', (e) => {
-                state.decree.obligations[index].name = e.target.value;
-                render();
-            });
-
-            card.querySelector('.ob-pass').addEventListener('input', (e) => {
-                state.decree.obligations[index].passport = e.target.value;
-                render();
-            });
+            card.querySelector('.ob-faction').addEventListener('change', (e) => { state.decree.obligations[index].faction = e.target.value; });
+            card.querySelector('.ob-name').addEventListener('input', (e) => { state.decree.obligations[index].name = e.target.value; });
+            card.querySelector('.ob-pass').addEventListener('input', (e) => { state.decree.obligations[index].passport = e.target.value; });
 
             if (item.type === 'Боди-Камера') {
-                card.querySelector('.ob-date').addEventListener('change', (e) => { state.decree.obligations[index].date = e.target.value; render(); });
-                card.querySelector('.ob-time-from').addEventListener('input', (e) => { state.decree.obligations[index].timeFrom = e.target.value; render(); });
-                card.querySelector('.ob-time-to').addEventListener('input', (e) => { state.decree.obligations[index].timeTo = e.target.value; render(); });
+                card.querySelector('.ob-date').addEventListener('change', (e) => { state.decree.obligations[index].date = e.target.value; });
+                card.querySelector('.ob-time-from').addEventListener('input', (e) => { state.decree.obligations[index].timeFrom = e.target.value; });
+                card.querySelector('.ob-time-to').addEventListener('input', (e) => { state.decree.obligations[index].timeTo = e.target.value; });
             } else if (item.type === 'Отстранение') {
-                card.querySelector('.ob-sup').addEventListener('input', (e) => { state.decree.obligations[index].supervisor = e.target.value; render(); });
+                card.querySelector('.ob-sup').addEventListener('input', (e) => { state.decree.obligations[index].supervisor = e.target.value; });
             }
 
             obligationsContainer.appendChild(card);
@@ -379,17 +351,10 @@ ${inter.summary || '—'}[/CENTER]`;
     }
 
     addObligationBtn.addEventListener('click', () => {
-        state.decree.obligations.push({
-            type: 'Уведомление',
-            faction: 'LSPD',
-            name: '',
-            passport: ''
-        });
+        state.decree.obligations.push({ type: 'Уведомление', faction: 'LSPD', name: '', passport: '' });
         renderObligationsCards();
-        render();
     });
 
-    // 10. Отрисовка списка разыскиваемых (Розыск)
     function renderWantedCards() {
         wantedContainer.innerHTML = '';
         state.wanted.wantedList.forEach((item, index) => {
@@ -398,134 +363,99 @@ ${inter.summary || '—'}[/CENTER]`;
 
             card.innerHTML = `
                 <div class="item-card-header">
-                    <span class="item-card-title">#${index + 1} Разыскиваемый</span>
-                    <button class="del-card-btn" title="Удалить">✕</button>
+                    <span class="card-num">#${index + 1} Разыскиваемый</span>
+                    <button class="del-btn">✕</button>
                 </div>
                 <div class="form-grid">
-                    <div class="input-field">
-                        <label>Имя Фамилия</label>
-                        <input type="text" class="w-name" placeholder="Имя Фамилия" value="${item.name || ''}">
-                    </div>
-                    <div class="input-field">
-                        <label>Паспорт</label>
-                        <input type="text" class="w-pass" placeholder="серия номер" value="${item.passport || ''}">
-                    </div>
-                    <div class="input-field">
-                        <label>Статьи обвинения</label>
-                        <input type="text" class="w-articles" placeholder="ст. 105, ст. 158" value="${item.articles || ''}">
-                    </div>
-                    <div class="input-field">
+                    <div class="field"><label>Имя Фамилия</label><input type="text" class="w-name" value="${item.name || ''}"></div>
+                    <div class="field"><label>Паспорт</label><input type="text" class="w-pass" value="${item.passport || ''}"></div>
+                    <div class="field"><label>Статьи обвинения</label><input type="text" class="w-articles" placeholder="ст. 105, 158" value="${item.articles || ''}"></div>
+                    <div class="field">
                         <label>Вид кодекса</label>
                         <select class="w-verdict">
                             <option value="УК СА" ${item.verdict === 'УК СА' ? 'selected' : ''}>УК СА</option>
                             <option value="АК СА" ${item.verdict === 'АК СА' ? 'selected' : ''}>АК СА</option>
                         </select>
                     </div>
-                    <div class="input-field full-width">
-                        <label>Срок лишения свободы</label>
-                        <input type="number" class="w-term" placeholder="Срок (числом)" min="1" value="${item.term || ''}">
-                    </div>
+                    <div class="field full-width"><label>Срок (числом)</label><input type="number" class="w-term" min="1" value="${item.term || ''}"></div>
                 </div>
             `;
 
-            card.querySelector('.del-card-btn').addEventListener('click', () => {
+            card.querySelector('.del-btn').addEventListener('click', () => {
                 state.wanted.wantedList.splice(index, 1);
                 renderWantedCards();
-                render();
             });
-
-            card.querySelector('.w-name').addEventListener('input', (e) => { state.wanted.wantedList[index].name = e.target.value; render(); });
-            card.querySelector('.w-pass').addEventListener('input', (e) => { state.wanted.wantedList[index].passport = e.target.value; render(); });
-            card.querySelector('.w-articles').addEventListener('input', (e) => { state.wanted.wantedList[index].articles = e.target.value; render(); });
-            card.querySelector('.w-verdict').addEventListener('change', (e) => { state.wanted.wantedList[index].verdict = e.target.value; render(); });
-            card.querySelector('.w-term').addEventListener('input', (e) => { state.wanted.wantedList[index].term = e.target.value; render(); });
+            card.querySelector('.w-name').addEventListener('input', (e) => { state.wanted.wantedList[index].name = e.target.value; });
+            card.querySelector('.w-pass').addEventListener('input', (e) => { state.wanted.wantedList[index].passport = e.target.value; });
+            card.querySelector('.w-articles').addEventListener('input', (e) => { state.wanted.wantedList[index].articles = e.target.value; });
+            card.querySelector('.w-verdict').addEventListener('change', (e) => { state.wanted.wantedList[index].verdict = e.target.value; });
+            card.querySelector('.w-term').addEventListener('input', (e) => { state.wanted.wantedList[index].term = e.target.value; });
 
             wantedContainer.appendChild(card);
         });
     }
 
     addWantedBtn.addEventListener('click', () => {
-        state.wanted.wantedList.push({
-            name: '',
-            passport: '',
-            articles: '',
-            verdict: 'УК СА',
-            term: ''
-        });
+        state.wanted.wantedList.push({ name: '', passport: '', articles: '', verdict: 'УК СА', term: '' });
         renderWantedCards();
-        render();
     });
 
-    // 11. Синхронизация статичных полей
-    const bindInput = (id, obj, prop) => {
+    // 9. Привязка обычных полей
+    const bind = (id, obj, key) => {
         const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('input', (e) => {
-                obj[prop] = e.target.value;
-                render();
-            });
-        }
+        if (el) el.addEventListener('input', (e) => { obj[key] = e.target.value; });
     };
 
-    // Постановление
-    bindInput('orderNumber', state.decree, 'orderNumber');
-    bindInput('caseId', state.decree, 'caseId');
-    bindInput('judgeName', state.decree, 'judgeName');
-    bindInput('judgeRank', state.decree, 'judgeRank');
-    bindInput('courtType', state.decree, 'courtType');
-    bindInput('factionSelect', state.decree, 'factionSelect');
-    bindInput('citizenName', state.decree, 'citizenName');
+    bind('orderNumber', state.decree, 'orderNumber');
+    bind('caseId', state.decree, 'caseId');
+    bind('judgeName', state.decree, 'judgeName');
+    bind('judgeRank', state.decree, 'judgeRank');
+    bind('courtType', state.decree, 'courtType');
+    bind('factionSelect', state.decree, 'factionSelect');
+    bind('citizenName', state.decree, 'citizenName');
 
-    // Допрос
-    bindInput('interrogationName', state.interrogation, 'name');
-    bindInput('interrogationPassport', state.interrogation, 'passport');
-    bindInput('interrogationDate', state.interrogation, 'date');
-    bindInput('interrogationTimeStart', state.interrogation, 'timeStart');
-    bindInput('interrogationTimeEnd', state.interrogation, 'timeEnd');
-    bindInput('interrogationPlace', state.interrogation, 'place');
-    bindInput('interrogationPresent', state.interrogation, 'present');
-    bindInput('interrogationSummary', state.interrogation, 'summary');
+    bind('interrogationName', state.interrogation, 'name');
+    bind('interrogationPassport', state.interrogation, 'passport');
+    bind('interrogationDate', state.interrogation, 'date');
+    bind('interrogationTimeStart', state.interrogation, 'timeStart');
+    bind('interrogationTimeEnd', state.interrogation, 'timeEnd');
+    bind('interrogationPlace', state.interrogation, 'place');
+    bind('interrogationPresent', state.interrogation, 'present');
+    bind('interrogationSummary', state.interrogation, 'summary');
 
-    // Розыск
-    bindInput('wantedOrderNumber', state.wanted, 'orderNumber');
-    bindInput('wantedCaseId', state.wanted, 'caseId');
-    bindInput('wantedJudgeName', state.wanted, 'judgeName');
-    bindInput('wantedJudgeRank', state.wanted, 'judgeRank');
-    bindInput('wantedCourtType', state.wanted, 'courtType');
+    bind('wantedOrderNumber', state.wanted, 'orderNumber');
+    bind('wantedCaseId', state.wanted, 'caseId');
+    bind('wantedJudgeName', state.wanted, 'judgeName');
+    bind('wantedJudgeRank', state.wanted, 'judgeRank');
+    bind('wantedCourtType', state.wanted, 'courtType');
 
-    // Настройки
-    bindInput('prosecutorPosition', state.settings, 'prosecutorPosition');
-    bindInput('prosecutorName', state.settings, 'prosecutorName');
-    bindInput('prosecutorDiscord', state.settings, 'prosecutorDiscord');
-    bindInput('prosecutorSignature', state.settings, 'prosecutorSignature');
-    bindInput('prosecutorSignatureLink', state.settings, 'prosecutorSignatureLink');
+    bind('prosecutorPosition', state.settings, 'prosecutorPosition');
+    bind('prosecutorName', state.settings, 'prosecutorName');
+    bind('prosecutorDiscord', state.settings, 'prosecutorDiscord');
+    bind('prosecutorSignature', state.settings, 'prosecutorSignature');
+    bind('prosecutorSignatureLink', state.settings, 'prosecutorSignatureLink');
 
-    // 12. Копирование и Сброс
-    copyBtn.addEventListener('click', async () => {
+    // 10. Копирование кода
+    async function copyCode(btnEl) {
         try {
-            await navigator.clipboard.writeText(bbcodeOutput.value);
-            const origText = copyBtn.innerText;
-            copyBtn.innerText = '✅ Скопировано!';
-            copyBtn.style.background = '#2ea043';
-            setTimeout(() => {
-                copyBtn.innerText = origText;
-                copyBtn.style.background = 'var(--success)';
-            }, 1800);
+            await navigator.clipboard.writeText(getCurrentBBCode());
+            const orig = btnEl.innerText;
+            btnEl.innerText = '✅ Скопировано!';
+            setTimeout(() => { btnEl.innerText = orig; }, 1600);
         } catch (e) {
-            alert('Не удалось скопировать текст');
+            alert('Ошибка копирования');
         }
-    });
+    }
+
+    copyBtn.addEventListener('click', () => copyCode(copyBtn));
+    modalCopyBtn.addEventListener('click', () => copyCode(modalCopyBtn));
 
     resetAllBtn.addEventListener('click', () => {
-        if (!confirm('Вы уверены, что хотите сбросить все введенные данные?')) return;
-        document.querySelectorAll('input:not([type="button"]):not([type="submit"]), textarea').forEach(i => i.value = '');
+        if (!confirm('Очистить все заполненные данные?')) return;
+        document.querySelectorAll('input, textarea').forEach(i => i.value = '');
         state.decree.obligations = [];
         state.wanted.wantedList = [];
         renderObligationsCards();
         renderWantedCards();
-        render();
     });
-
-    // Стартовая инициализация
-    render();
 });
