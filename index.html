@@ -14,88 +14,221 @@
             <div class="brand">
                 <div class="logo">⚖️</div>
                 <div class="brand-text">
-                    <strong>USMS Workspace</strong>
+                    <strong>USMS Portal</strong>
                     <span>Federal System</span>
                 </div>
             </div>
             <nav class="nav-menu">
                 <button class="nav-item active" data-tab="decree">📜 Постановление</button>
+                <button class="nav-item" data-tab="interrogation">🎙️ Допрос</button>
                 <button class="nav-item" data-tab="wanted">🔍 Розыск</button>
-                <button class="nav-item" data-tab="settings">⚙️ Настройки профиля</button>
+                <button class="nav-item" data-tab="settings">⚙️ Профиль / Подпись</button>
             </nav>
+            <div class="sidebar-footer">
+                <button id="resetAllBtn" class="btn btn-outline w-full">↺ Сбросить всё</button>
+            </div>
         </aside>
 
         <!-- Основная рабочая область -->
         <main class="workspace">
             
-            <!-- Левая колонка: Форма -->
+            <!-- Левая колонка: Формы ввода -->
             <section class="editor-pane">
-                <div class="pane-header">
-                    <h2>Редактор постановления</h2>
-                    <button id="addActionBtn" class="btn btn-primary">+ Добавить действие</button>
-                </div>
                 
-                <div class="form-container">
-                    <!-- Базовые поля -->
-                    <div class="form-group-grid">
-                        <div class="input-field">
-                            <label>Номер (MSLR-№)</label>
-                            <input type="text" id="orderNum" placeholder="600" value="600">
+                <!-- ВКЛАДКА 1: ПОСТАНОВЛЕНИЕ -->
+                <div id="tab-decree" class="tab-content active">
+                    <div class="pane-header">
+                        <h2>Основное постановление</h2>
+                        <button id="addObligationBtn" class="btn btn-primary">+ Добавить действие</button>
+                    </div>
+                    <div class="form-container">
+                        <div class="form-grid">
+                            <div class="input-field">
+                                <label>Номер постановления (MSLR-№)</label>
+                                <input type="text" id="orderNumber" placeholder="600" value="600">
+                            </div>
+                            <div class="input-field">
+                                <label>Номер искового заявления</label>
+                                <input type="text" id="caseId" placeholder="2600" value="">
+                            </div>
+                            <div class="input-field">
+                                <label>Имя Фамилия судьи</label>
+                                <input type="text" id="judgeName" placeholder="Dante DeRosse" value="">
+                            </div>
+                            <div class="input-field">
+                                <label>Должность судьи</label>
+                                <select id="judgeRank">
+                                    <option value="окружного судьи">Окружной судья</option>
+                                    <option value="председателя окружного суда">Председатель окружного суда</option>
+                                    <option value="верховного Судьи">Верховный судья</option>
+                                </select>
+                            </div>
+                            <div class="input-field">
+                                <label>Тип суда</label>
+                                <select id="courtType">
+                                    <option value="окружной">Окружной</option>
+                                    <option value="кассационный">Кассационный</option>
+                                    <option value="апелляционный">Апелляционный</option>
+                                    <option value="верховный">Верховный</option>
+                                </select>
+                            </div>
+                            <div class="input-field">
+                                <label>Кому направляется</label>
+                                <select id="factionSelect">
+                                    <option value="LSPD">LSPD</option>
+                                    <option value="LSSD">LSSD</option>
+                                    <option value="SANG">SANG</option>
+                                    <option value="SASPA">SASPA</option>
+                                    <option value="FIB">FIB</option>
+                                    <option value="GOV">GOV</option>
+                                    <option value="EMS LS">EMS LS</option>
+                                    <option value="EMS SS">EMS SS</option>
+                                    <option value="Гражданину" selected>Гражданин</option>
+                                </select>
+                            </div>
+                            <div class="input-field full-width" id="citizenRow">
+                                <label>Имя Фамилия гражданина</label>
+                                <input type="text" id="citizenName" placeholder="Dante DeRosse" value="">
+                            </div>
                         </div>
-                        <div class="input-field">
-                            <label>Номер иска</label>
-                            <input type="text" id="caseNum" placeholder="2600">
-                        </div>
-                        <div class="input-field">
-                            <label>Тип суда</label>
-                            <select id="courtType">
-                                <option value="окружной">Окружной</option>
-                                <option value="апелляционный">Апелляционный</option>
-                                <option value="верховный">Верховный</option>
-                            </select>
-                        </div>
-                        <div class="input-field">
-                            <label>Судья (Имя Фамилия)</label>
-                            <input type="text" id="judgeName" placeholder="Имя Фамилия">
-                        </div>
-                        <div class="input-field">
-                            <label>Должность судьи</label>
-                            <select id="judgeRank">
-                                <option value="окружного судьи">Окружной судья</option>
-                                <option value="верховного судьи">Верховный судья</option>
-                            </select>
-                        </div>
-                        <div class="input-field">
-                            <label>Направляется (Фракция)</label>
-                            <select id="targetFaction">
-                                <option value="LSPD">LSPD</option>
-                                <option value="FIB">FIB</option>
-                                <option value="Гражданину">Гражданину</option>
-                            </select>
+
+                        <div class="divider">Действия к исполнению</div>
+                        <div id="obligationsContainer" class="items-list"></div>
+                    </div>
+                </div>
+
+                <!-- ВКЛАДКА 2: ДОПРОС -->
+                <div id="tab-interrogation" class="tab-content">
+                    <div class="pane-header">
+                        <h2>Протокол допроса</h2>
+                    </div>
+                    <div class="form-container">
+                        <div class="form-grid">
+                            <div class="input-field">
+                                <label>Имя допрашиваемого</label>
+                                <input type="text" id="interrogationName" placeholder="Имя Фамилия">
+                            </div>
+                            <div class="input-field">
+                                <label>Паспорт</label>
+                                <input type="text" id="interrogationPassport" placeholder="123456">
+                            </div>
+                            <div class="input-field">
+                                <label>Дата допроса</label>
+                                <input type="date" id="interrogationDate">
+                            </div>
+                            <div class="input-field">
+                                <label>Время начала</label>
+                                <input type="time" id="interrogationTimeStart">
+                            </div>
+                            <div class="input-field">
+                                <label>Время окончания</label>
+                                <input type="time" id="interrogationTimeEnd">
+                            </div>
+                            <div class="input-field">
+                                <label>Место проведения</label>
+                                <input type="text" id="interrogationPlace" placeholder="Отдел полиции, каб. 101">
+                            </div>
+                            <div class="input-field full-width">
+                                <label>Присутствующие лица</label>
+                                <input type="text" id="interrogationPresent" placeholder="Адвокат, прокурор">
+                            </div>
+                            <div class="input-field full-width">
+                                <label>Краткое содержание допроса</label>
+                                <textarea id="interrogationSummary" rows="4" placeholder="Введите краткое описание хода допроса..."></textarea>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="divider">Действия к исполнению</div>
-                    
-                    <!-- Контейнер для динамических действий -->
-                    <div id="actionsList" class="actions-list"></div>
                 </div>
+
+                <!-- ВКЛАДКА 3: РОЗЫСК -->
+                <div id="tab-wanted" class="tab-content">
+                    <div class="pane-header">
+                        <h2>Федеральный розыск</h2>
+                        <button id="addWantedBtn" class="btn btn-danger">+ Добавить в розыск</button>
+                    </div>
+                    <div class="form-container">
+                        <div class="form-grid">
+                            <div class="input-field">
+                                <label>Номер постановления (MSFS-№)</label>
+                                <input type="text" id="wantedOrderNumber" placeholder="600" value="600">
+                            </div>
+                            <div class="input-field">
+                                <label>Номер искового заявления</label>
+                                <input type="text" id="wantedCaseId" placeholder="2600">
+                            </div>
+                            <div class="input-field">
+                                <label>Имя Фамилия судьи</label>
+                                <input type="text" id="wantedJudgeName" placeholder="Dante DeRosse">
+                            </div>
+                            <div class="input-field">
+                                <label>Должность судьи</label>
+                                <select id="wantedJudgeRank">
+                                    <option value="окружного судьи">Окружной судья</option>
+                                    <option value="председателя окружного суда">Председатель окружного суда</option>
+                                    <option value="верховного судьи">Верховный Судья</option>
+                                </select>
+                            </div>
+                            <div class="input-field full-width">
+                                <label>Тип суда</label>
+                                <select id="wantedCourtType">
+                                    <option value="окружного суда">Окружной</option>
+                                    <option value="кассационного суда">Кассационный</option>
+                                    <option value="апелляционного суда">Апелляционный</option>
+                                    <option value="верховного суда">Верховный</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="divider">Список разыскиваемых</div>
+                        <div id="wantedContainer" class="items-list"></div>
+                    </div>
+                </div>
+
+                <!-- ВКЛАДКА 4: НАСТРОЙКИ ПРОФИЛЯ -->
+                <div id="tab-settings" class="tab-content">
+                    <div class="pane-header">
+                        <h2>Настройки должностного лица</h2>
+                    </div>
+                    <div class="form-container">
+                        <div class="form-grid">
+                            <div class="input-field full-width">
+                                <label>Ваша должность</label>
+                                <input type="text" id="prosecutorPosition" placeholder="Директор USMS">
+                            </div>
+                            <div class="input-field full-width">
+                                <label>Ваше Имя Фамилия</label>
+                                <input type="text" id="prosecutorName" placeholder="Dante DeRosse">
+                            </div>
+                            <div class="input-field full-width">
+                                <label>Спецсвязь (Discord)</label>
+                                <input type="text" id="prosecutorDiscord" placeholder=".dantezzz">
+                            </div>
+                            <div class="input-field full-width">
+                                <label>Текстовая подпись</label>
+                                <textarea id="prosecutorSignature" rows="2" placeholder="Подпись"></textarea>
+                            </div>
+                            <div class="input-field full-width">
+                                <label>Ссылка на картинку подписи (Imgur)</label>
+                                <input type="text" id="prosecutorSignatureLink" placeholder="https://i.imgur.com/...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </section>
 
             <!-- Правая колонка: Live Preview форума -->
             <section class="preview-pane">
                 <div class="pane-header preview-header">
                     <div class="preview-tabs">
-                        <button class="view-tab active" data-view="forum">Форум (GTA5RP)</button>
-                        <button class="view-tab" data-view="bbcode">BBCode</button>
+                        <button class="view-tab active" data-view="forum">Форум GTA5RP</button>
+                        <button class="view-tab" data-view="bbcode">Чистый BBCode</button>
                     </div>
-                    <button id="copyBtn" class="btn btn-success">Скопировать код</button>
+                    <button id="copyBtn" class="btn btn-success">📋 Скопировать код</button>
                 </div>
                 
                 <div class="preview-content">
-                    <!-- Рендер как на форуме -->
                     <div id="forumRender" class="gta5rp-forum-theme"></div>
-                    <!-- Сырой код -->
                     <textarea id="bbcodeOutput" class="raw-bbcode hidden" readonly></textarea>
                 </div>
             </section>
