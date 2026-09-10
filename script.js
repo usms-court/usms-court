@@ -1,12 +1,12 @@
 /* ============================================================
-   USMS GENERATOR — SCRIPT v3.0
+   USMS GENERATOR — SCRIPT v3.1
    ============================================================ */
 
 (function () {
     'use strict';
 
     // ============================================================
-    // 1. КОНСТАНТЫ И ШАБЛОНЫ
+    // КОНСТАНТЫ И ШАБЛОНЫ
     // ============================================================
     
     const STORAGE_KEY = 'usms_generator_settings_v3';
@@ -70,27 +70,26 @@
 [/TABLE]
 `;
 
-    // НОВОЕ: шаблон для допроса
+    // Шаблон допроса — обновлён (судья, тип суда, иск)
     const INTERROGATION_TEMPLATE = `
 [TABLE width="100%"]
 [TR]
 [td][IMG width="886px" alt="USMS.png"]https://imgur.com/F9gO8NW.png[/IMG]
-[CENTER][IMG width="886px" alt="USMS.png"]https://imgur.com/zQNkkZU.png[/IMG] [B][SIZE=6][COLOR=rgb(41, 105, 176)]ПРОТОКОЛ ДОПРОСА №{caseId}[/COLOR][/SIZE]
+[CENTER][IMG width="886px" alt="USMS.png"]https://imgur.com/zQNkkZU.png[/IMG] [B][SIZE=6][COLOR=rgb(41, 105, 176)]ПРОТОКОЛ ДОПРОСА №{interrogationCaseId}[/COLOR][/SIZE]
+
+[B]Судья: [COLOR=rgb(184, 49, 47)]{interrogationJudgeRank} {interrogationJudgeName}[/COLOR]
+Тип суда: [COLOR=rgb(184, 49, 47)]{interrogationCourtType} суд[/COLOR]
+Иск: [COLOR=rgb(184, 49, 47)]№{interrogationCaseId}[/COLOR][/B]
+
+[IMG width="886px" alt="USMS.png"]https://imgur.com/t7mmvb7.png[/IMG]
 
 [B]Дата: [COLOR=rgb(184, 49, 47)]{interrogationDate}[/COLOR]
-Время: [COLOR=rgb(184, 49, 47)]{interrogationTimeStart} — {interrogationTimeEnd}[/COLOR]
-Место: [COLOR=rgb(184, 49, 47)]{interrogationPlace}[/COLOR][/B]
+Время: [COLOR=rgb(184, 49, 47)]{interrogationTimeStart} — {interrogationTimeEnd}[/COLOR][/B]
 
 [IMG width="886px" alt="USMS.png"]https://imgur.com/t7mmvb7.png[/IMG]
 
 [B]Допрашиваемый:[/B] [COLOR=rgb(184, 49, 47)]{interrogationName}[/COLOR]
 [B]Паспорт:[/B] [COLOR=rgb(184, 49, 47)]{interrogationPassport}[/COLOR]
-[B]Присутствующие:[/B] {interrogationPresent}
-
-[IMG width="886px" alt="USMS.png"]https://imgur.com/t7mmvb7.png[/IMG]
-
-[B]СОДЕРЖАНИЕ ДОПРОСА:[/B]
-{interrogationSummary}
 
 [IMG width="886px" alt="USMS.png"]https://imgur.com/T0zf5dm.png[/IMG][/CENTER]
 [RIGHT][B]
@@ -110,19 +109,14 @@
     };
 
     const SUPERVISOR_RANKS = {
-        'LSPD': 'Шефа',
-        'LSSD': 'Шерифа',
-        'SANG': 'Генерала',
-        'SASPA': 'Директора',
-        'FIB': 'Директора',
-        'GOV': 'Губернатора',
-        'EMS LS': 'Главного врача',
-        'EMS SS': 'Главного врача',
+        'LSPD': 'Шефа', 'LSSD': 'Шерифа', 'SANG': 'Генерала',
+        'SASPA': 'Директора', 'FIB': 'Директора', 'GOV': 'Губернатора',
+        'EMS LS': 'Главного врача', 'EMS SS': 'Главного врача',
         'Гражданин': 'Руководства (не требуется)'
     };
 
     // ============================================================
-    // 2. ГЛОБАЛЬНОЕ СОСТОЯНИЕ
+    // СОСТОЯНИЕ
     // ============================================================
     
     const state = {
@@ -133,7 +127,7 @@
     };
 
     // ============================================================
-    // 3. УТИЛИТЫ
+    // УТИЛИТЫ
     // ============================================================
     
     const $ = (id) => document.getElementById(id);
@@ -172,19 +166,16 @@
     }
 
     // ============================================================
-    // 4. ЗВУКИ
+    // ЗВУКИ
     // ============================================================
     
     function playSound(type) {
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
             const presets = {
-                add: [523.25, 0.15, 0.12],
-                delete: [293.66, 0.2, 0.1],
-                toggle: [659.25, 0.08, 0.08],
-                copy: [880, 0.12, 0.1],
-                reset: [220, 0.3, 0.08],
-                save: [783.99, 0.1, 0.1]
+                add: [523.25, 0.15, 0.12], delete: [293.66, 0.2, 0.1],
+                toggle: [659.25, 0.08, 0.08], copy: [880, 0.12, 0.1],
+                reset: [220, 0.3, 0.08], save: [783.99, 0.1, 0.1]
             };
             const [freq, dur, vol] = presets[type] || [440, 0.1, 0.08];
             const osc = ctx.createOscillator();
@@ -197,22 +188,22 @@
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + dur);
-        } catch (e) { /* игнорируем */ }
+        } catch (e) {}
     }
 
     // ============================================================
-    // 5. LOCALSTORAGE
+    // LOCALSTORAGE
     // ============================================================
     
-   const STORAGE_FIELDS = [
-       'prosecutorPosition', 'prosecutorName', 'prosecutorSignature',
-       'prosecutorSignatureLink', 'prosecutorDiscord',
-       'orderNumber', 'judgeName', 'judgeRank', 'courtType', 'caseId', 'faction', 'citizenName',
-       'wantedOrderNumber', 'wantedJudgeName', 'wantedJudgeRank', 'wantedCourtType', 'wantedCaseId',
-       'interrogationName', 'interrogationPassport', 'interrogationDate',
-       'interrogationTimeStart', 'interrogationTimeEnd'
-       // УБРАНЫ: interrogationPlace, interrogationPresent, interrogationSummary
-   ];
+    const STORAGE_FIELDS = [
+        'prosecutorPosition', 'prosecutorName', 'prosecutorSignature',
+        'prosecutorSignatureLink', 'prosecutorDiscord',
+        'orderNumber', 'judgeName', 'judgeRank', 'courtType', 'caseId', 'faction', 'citizenName',
+        'wantedOrderNumber', 'wantedJudgeName', 'wantedJudgeRank', 'wantedCourtType', 'wantedCaseId',
+        'interrogationJudgeName', 'interrogationJudgeRank', 'interrogationCourtType', 'interrogationCaseId',
+        'interrogationName', 'interrogationPassport', 'interrogationDate',
+        'interrogationTimeStart', 'interrogationTimeEnd'
+    ];
 
     function saveSettings() {
         try {
@@ -244,20 +235,31 @@
     }
 
     // ============================================================
-    // 6. ВАЛИДАЦИЯ
+    // ВАЛИДАЦИЯ
     // ============================================================
     
     function validateField(input) {
         const isRequired = input.dataset.required === 'true';
-        const value = input.value.trim();
-        const isValid = !isRequired || value !== '';
-        
         if (!isRequired) return true;
-        
+
+        const value = input.value.trim();
+        const isValid = value !== '';
         const errorEl = $(input.id + 'Error');
+        
+        // Ошибку показываем ТОЛЬКО если поле не пустое, но невалидное, 
+        // ИЛИ если пользователь уже взаимодействовал — но проще: показываем при невалидности, только если поле "трогали"
+        // По ТЗ: показывать ошибку только при наличии data-show-error="true" или при попытке отправки.
+        // Для простоты — показываем только при наличии класса error, который выставляется вручную.
+        
         input.classList.toggle('error', !isValid);
         input.classList.toggle('valid', isValid);
-        if (errorEl) errorEl.classList.toggle('field__error--show', !isValid);
+        
+        // Показываем ошибку только если поле было "тронуто" (has been interacted with)
+        if (errorEl) {
+            const touched = input.dataset.touched === 'true';
+            errorEl.classList.toggle('field__error--show', !isValid && touched);
+        }
+        
         return isValid;
     }
 
@@ -308,7 +310,7 @@
     }
 
     // ============================================================
-    // 7. ПРОГРЕСС И ФИНАЛЬНЫЙ ЧЕКЛИСТ
+    // ПРОГРЕСС
     // ============================================================
     
     function updateProgress() {
@@ -389,7 +391,7 @@
     }
 
     // ============================================================
-    // 8. DRAG & DROP
+    // DRAG & DROP
     // ============================================================
     
     function initDragDrop(container) {
@@ -441,18 +443,15 @@
             } else {
                 container.insertBefore(draggedItem, item);
             }
-            if (container.id === 'obligationsContainer') {
-                renumberObligations();
-            } else {
-                renumberWanted();
-            }
+            if (container.id === 'obligationsContainer') renumberObligations();
+            else renumberWanted();
             $$('.drag-over').forEach(el => el.classList.remove('drag-over'));
             draggedItem = null;
         });
     }
 
     // ============================================================
-    // 9. ДЕЙСТВИЯ (обязанности)
+    // ДЕЙСТВИЯ
     // ============================================================
     
     function getSupervisorRank(faction) {
@@ -461,10 +460,8 @@
 
     function getTypeClass(type) {
         return {
-            'Уведомление': 'notice',
-            'Боди-Камера': '',
-            'Запрет на увольнение': 'warning',
-            'Отстранение': 'danger'
+            'Уведомление': 'notice', 'Боди-Камера': '',
+            'Запрет на увольнение': 'warning', 'Отстранение': 'danger'
         }[type] || '';
     }
 
@@ -644,7 +641,7 @@
     }
 
     // ============================================================
-    // 10. РАЗЫСКИВАЕМЫЕ
+    // РАЗЫСКИВАЕМЫЕ
     // ============================================================
     
     function createWantedElement(data) {
@@ -773,7 +770,7 @@
     }
 
     // ============================================================
-    // 11. СБОР ДАННЫХ
+    // СБОР ДАННЫХ
     // ============================================================
     
     function collectObligations() {
@@ -815,7 +812,7 @@
     }
 
     // ============================================================
-    // 12. РЕНДЕР
+    // РЕНДЕР
     // ============================================================
     
     function renderObligations(list) {
@@ -863,7 +860,7 @@
     }
 
     // ============================================================
-    // 13. ГЕНЕРАЦИЯ
+    // ГЕНЕРАЦИЯ
     // ============================================================
     
     function regenerate() {
@@ -895,23 +892,25 @@
             };
             result = result.replace(/\{(\w+)\}/g, (_, key) => data[key] ?? `{${key}}`);
             result = result.replace(/\{wantedList\}/g, renderWanted(collectWanted()));
-            } else if (state.currentTab === 'decree' && state.currentSubTab === 'decree-interrogation') {
-                result = INTERROGATION_TEMPLATE;
-                const data = {
-                    caseId: $('caseId').value || '—',
-                    interrogationName: $('interrogationName').value || '—',
-                    interrogationPassport: $('interrogationPassport').value || '—',
-                    interrogationDate: formatDate($('interrogationDate').value),
-                    interrogationTimeStart: $('interrogationTimeStart').value || '—',
-                    interrogationTimeEnd: $('interrogationTimeEnd').value || '—',
-                    currentDate,
-                    prosecutorPosition: $('prosecutorPosition').value || '—',
-                    prosecutorName: $('prosecutorName').value || '—',
-                    prosecutorSignatureFormatted: signatureFormatted
-                    // УБРАНЫ: interrogationPlace, interrogationPresent, interrogationSummary
-                };
-                result = result.replace(/\{(\w+)\}/g, (_, key) => data[key] ?? `{${key}}`);
-            } else {
+        } else if (state.currentTab === 'decree' && state.currentSubTab === 'decree-interrogation') {
+            result = INTERROGATION_TEMPLATE;
+            const data = {
+                interrogationJudgeName: $('interrogationJudgeName').value || '—',
+                interrogationJudgeRank: $('interrogationJudgeRank').value || 'Судьи',
+                interrogationCourtType: $('interrogationCourtType').value || 'окружного',
+                interrogationCaseId: $('interrogationCaseId').value || '—',
+                interrogationName: $('interrogationName').value || '—',
+                interrogationPassport: $('interrogationPassport').value || '—',
+                interrogationDate: formatDate($('interrogationDate').value),
+                interrogationTimeStart: $('interrogationTimeStart').value || '—',
+                interrogationTimeEnd: $('interrogationTimeEnd').value || '—',
+                currentDate,
+                prosecutorPosition: $('prosecutorPosition').value || '—',
+                prosecutorName: $('prosecutorName').value || '—',
+                prosecutorSignatureFormatted: signatureFormatted
+            };
+            result = result.replace(/\{(\w+)\}/g, (_, key) => data[key] ?? `{${key}}`);
+        } else {
             result = DEFAULT_TEMPLATE;
             const data = {
                 orderNumber: $('orderNumber').value || '—',
@@ -936,7 +935,7 @@
     }
 
     // ============================================================
-    // 14. ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
+    // ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
     // ============================================================
     
     function initTabs() {
@@ -983,7 +982,7 @@
     }
 
     // ============================================================
-    // 15. МОДАЛКИ
+    // МОДАЛКИ
     // ============================================================
     
     function openModal(modal) {
@@ -1013,7 +1012,7 @@
     }
 
     // ============================================================
-    // 16. СОБЫТИЯ
+    // СОБЫТИЯ
     // ============================================================
     
     function initEvents() {
@@ -1024,13 +1023,15 @@
             playSound('reset');
             ['orderNumber', 'judgeName', 'caseId', 'citizenName',
              'wantedOrderNumber', 'wantedJudgeName', 'wantedCaseId',
+             'interrogationJudgeName', 'interrogationCaseId',
              'interrogationName', 'interrogationPassport', 'interrogationDate',
-             'interrogationTimeStart', 'interrogationTimeEnd', 'interrogationPlace',
-             'interrogationPresent', 'interrogationSummary'].forEach(id => { $(id).value = ''; });
+             'interrogationTimeStart', 'interrogationTimeEnd'].forEach(id => { $(id).value = ''; });
             $('judgeRank').value = 'окружного судьи';
             $('courtType').value = 'окружной';
             $('wantedJudgeRank').value = 'окружного судьи';
             $('wantedCourtType').value = 'окружного суда';
+            $('interrogationJudgeRank').value = 'окружного судьи';
+            $('interrogationCourtType').value = 'окружной';
             $('obligationsContainer').innerHTML = '';
             $('wantedContainer').innerHTML = '';
             state.obligationCounter = 0;
@@ -1071,6 +1072,18 @@
             updateProgress();
         });
 
+        // Помечаем поля как "тронутые" при взаимодействии
+        $$('input[data-required="true"], select[data-required="true"], textarea[data-required="true"]').forEach(inp => {
+            inp.addEventListener('blur', () => {
+                inp.dataset.touched = 'true';
+                validateField(inp);
+            });
+            inp.addEventListener('input', () => {
+                inp.dataset.touched = 'true';
+                validateField(inp);
+            });
+        });
+
         // Автообновление
         const inputs = $$('input, select, textarea');
         let timer = null;
@@ -1088,7 +1101,7 @@
     }
 
     // ============================================================
-    // 17. ИНИЦИАЛИЗАЦИЯ
+    // ИНИЦИАЛИЗАЦИЯ
     // ============================================================
     
     function init() {
