@@ -895,25 +895,23 @@
             };
             result = result.replace(/\{(\w+)\}/g, (_, key) => data[key] ?? `{${key}}`);
             result = result.replace(/\{wantedList\}/g, renderWanted(collectWanted()));
-        } else if (state.currentTab === 'decree' && state.currentSubTab === 'decree-interrogation') {
-            result = INTERROGATION_TEMPLATE;
-            const data = {
-                caseId: $('caseId').value || '—',
-                interrogationName: $('interrogationName').value || '—',
-                interrogationPassport: $('interrogationPassport').value || '—',
-                interrogationDate: formatDate($('interrogationDate').value),
-                interrogationTimeStart: $('interrogationTimeStart').value || '—',
-                interrogationTimeEnd: $('interrogationTimeEnd').value || '—',
-                interrogationPlace: $('interrogationPlace').value || '—',
-                interrogationPresent: $('interrogationPresent').value || '—',
-                interrogationSummary: $('interrogationSummary').value || '—',
-                currentDate,
-                prosecutorPosition: $('prosecutorPosition').value || '—',
-                prosecutorName: $('prosecutorName').value || '—',
-                prosecutorSignatureFormatted: signatureFormatted
-            };
-            result = result.replace(/\{(\w+)\}/g, (_, key) => data[key] ?? `{${key}}`);
-        } else {
+            } else if (state.currentTab === 'decree' && state.currentSubTab === 'decree-interrogation') {
+                result = INTERROGATION_TEMPLATE;
+                const data = {
+                    caseId: $('caseId').value || '—',
+                    interrogationName: $('interrogationName').value || '—',
+                    interrogationPassport: $('interrogationPassport').value || '—',
+                    interrogationDate: formatDate($('interrogationDate').value),
+                    interrogationTimeStart: $('interrogationTimeStart').value || '—',
+                    interrogationTimeEnd: $('interrogationTimeEnd').value || '—',
+                    currentDate,
+                    prosecutorPosition: $('prosecutorPosition').value || '—',
+                    prosecutorName: $('prosecutorName').value || '—',
+                    prosecutorSignatureFormatted: signatureFormatted
+                    // УБРАНЫ: interrogationPlace, interrogationPresent, interrogationSummary
+                };
+                result = result.replace(/\{(\w+)\}/g, (_, key) => data[key] ?? `{${key}}`);
+            } else {
             result = DEFAULT_TEMPLATE;
             const data = {
                 orderNumber: $('orderNumber').value || '—',
