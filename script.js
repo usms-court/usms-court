@@ -204,15 +204,15 @@
     // 5. LOCALSTORAGE
     // ============================================================
     
-    const STORAGE_FIELDS = [
-        'prosecutorPosition', 'prosecutorName', 'prosecutorSignature',
-        'prosecutorSignatureLink', 'prosecutorDiscord',
-        'orderNumber', 'judgeName', 'judgeRank', 'courtType', 'caseId', 'faction', 'citizenName',
-        'wantedOrderNumber', 'wantedJudgeName', 'wantedJudgeRank', 'wantedCourtType', 'wantedCaseId',
-        'interrogationName', 'interrogationPassport', 'interrogationDate',
-        'interrogationTimeStart', 'interrogationTimeEnd', 'interrogationPlace',
-        'interrogationPresent', 'interrogationSummary'
-    ];
+   const STORAGE_FIELDS = [
+       'prosecutorPosition', 'prosecutorName', 'prosecutorSignature',
+       'prosecutorSignatureLink', 'prosecutorDiscord',
+       'orderNumber', 'judgeName', 'judgeRank', 'courtType', 'caseId', 'faction', 'citizenName',
+       'wantedOrderNumber', 'wantedJudgeName', 'wantedJudgeRank', 'wantedCourtType', 'wantedCaseId',
+       'interrogationName', 'interrogationPassport', 'interrogationDate',
+       'interrogationTimeStart', 'interrogationTimeEnd'
+       // УБРАНЫ: interrogationPlace, interrogationPresent, interrogationSummary
+   ];
 
     function saveSettings() {
         try {
