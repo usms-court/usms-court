@@ -74,23 +74,23 @@
 [TABLE width="100%"]
 [TR]
 [td][IMG width="886px" alt="USMS.png"]https://imgur.com/F9gO8NW.png[/IMG]
-[CENTER][IMG width="886px" alt="USMS.png"]https://imgur.com/zQNkkZU.png[/IMG] [B][SIZE=6][COLOR=rgb(41, 105, 176)]ПРОТОКОЛ ДОПРОСА №{interrogationCaseId}[/COLOR][/SIZE]
+[CENTER][IMG width="886px" alt="USMS.png"]https://imgur.com/zQNkkZU.png[/IMG] [B][SIZE=6][COLOR=rgb(41, 105, 176)]ПОСТАНОВЛЕНИЕ MSLR-№[/COLOR][/SIZE]
+Руководствуясь своими полномочиями, предоставленными статьей 2.13 и 2.14 главы V Закона "О United States Marshals Service" и постановлением [COLOR=rgb(184, 49, 47)]{interrogationJudgeRank} {interrogationJudgeName}[/COLOR] о принятии искового заявления[COLOR=rgb(184, 49, 47)] №{interrogationCaseId}[/COLOR] в [COLOR=rgb(255, 255, 255)]{interrogationCourtType} суд[/COLOR] штата Сан-Андреас постановляю: 
+Кому: [COLOR=rgb(41, 105, 176)]{faction} {citizen}[/COLOR][IMG width="886px" alt="USMS.png"]https://imgur.com/t7mmvb7.png[/IMG] 
+ 
+{obligations}
 
-[B]Судья: [COLOR=rgb(184, 49, 47)]{interrogationJudgeRank} {interrogationJudgeName}[/COLOR]
-Тип суда: [COLOR=rgb(184, 49, 47)]{interrogationCourtType} суд[/COLOR]
-Иск: [COLOR=rgb(184, 49, 47)]№{interrogationCaseId}[/COLOR][/B]
-
-[IMG width="886px" alt="USMS.png"]https://imgur.com/t7mmvb7.png[/IMG]
-
-[B]Дата: [COLOR=rgb(184, 49, 47)]{interrogationDate}[/COLOR]
-Время: [COLOR=rgb(184, 49, 47)]{interrogationTimeStart} — {interrogationTimeEnd}[/COLOR][/B]
 
 [IMG width="886px" alt="USMS.png"]https://imgur.com/t7mmvb7.png[/IMG]
-
-[B]Допрашиваемый:[/B] [COLOR=rgb(184, 49, 47)]{interrogationName}[/COLOR]
-[B]Паспорт:[/B] [COLOR=rgb(184, 49, 47)]{interrogationPassport}[/COLOR]
-
-[IMG width="886px" alt="USMS.png"]https://imgur.com/T0zf5dm.png[/IMG][/CENTER]
+[B][COLOR=rgb(184, 49, 47)]1.[/COLOR] В случае невозможности исполнения какого-либо из пункстов настоящего постановления соответствующее уведомление с указанием причин направить на указанную ниже почту;
+ 
+[COLOR=rgb(184, 49, 47)]2.[/COLOR] Доказательства исполнения предоставить на указанную ниже почту; 
+ 
+[COLOR=rgb(184, 49, 47)]3.[/COLOR] Адрес электронной почты Службы Маршалов: {prosecutorDiscord}
+ 
+[COLOR=rgb(184, 49, 47)]4.[/COLOR] Постановление вступает в законную силу с момента публикации.
+ 
+[COLOR=rgb(184, 49, 47)]5.[/COLOR] Срок исполнения постановления установить равным 24 часам. [/B] [IMG width="886px" alt="USMS.png"]https://imgur.com/T0zf5dm.png[/IMG][/CENTER]
 [RIGHT][B]
 {prosecutorPosition} 
  Дата: {currentDate}[/B]
