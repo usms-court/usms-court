@@ -1,12 +1,12 @@
 /* ============================================================
-   USMS GENERATOR — SCRIPT v3.1
+   USMS GENERATOR — OPTIMIZED SCRIPT v3.2
    ============================================================ */
 
 (function () {
     'use strict';
 
     // ============================================================
-    // КОНСТАНТЫ И ШАБЛОНЫ
+    // КОНСТАНТЫ
     // ============================================================
     
     const STORAGE_KEY = 'usms_generator_settings_v3';
@@ -70,7 +70,6 @@
 [/TABLE]
 `;
 
-    // Шаблон допроса — обновлён (судья, тип суда, иск)
     const INTERROGATION_TEMPLATE = `
 [TABLE width="100%"]
 [TR]
@@ -116,6 +115,28 @@
     };
 
     // ============================================================
+    // КЭШ DOM (ОПТИМИЗАЦИЯ)
+    // ============================================================
+    
+    let DOM = null;
+    
+    function cacheDOM() {
+        DOM = {
+            outputDisplay: document.getElementById('outputDisplay'),
+            progressFill: document.getElementById('progressFill'),
+            progressPct: document.getElementById('progressPct'),
+            actionsCount: document.getElementById('actionsCount'),
+            wantedCount: document.getElementById('wantedCount'),
+            obligationsContainer: document.getElementById('obligationsContainer'),
+            wantedContainer: document.getElementById('wantedContainer'),
+            appContainer: document.getElementById('appContainer')
+        };
+    }
+
+    const $ = (id) => document.getElementById(id);
+    const $$ = (sel, ctx = document) => ctx.querySelectorAll(sel);
+
+    // ============================================================
     // СОСТОЯНИЕ
     // ============================================================
     
@@ -130,9 +151,6 @@
     // УТИЛИТЫ
     // ============================================================
     
-    const $ = (id) => document.getElementById(id);
-    const $$ = (sel, ctx = document) => ctx.querySelectorAll(sel);
-
     function getMoscowDate() {
         const now = new Date();
         const moscowOffset = 3 * 60;
@@ -166,12 +184,24 @@
     }
 
     // ============================================================
-    // ЗВУКИ
+    // ЗВУКИ (ленивая инициализация AudioContext)
     // ============================================================
     
+    let _audioCtx = null;
+    function getAudioCtx() {
+        if (!_audioCtx) {
+            try {
+                _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) { return null; }
+        }
+        if (_audioCtx.state === 'suspended') _audioCtx.resume();
+        return _audioCtx;
+    }
+
     function playSound(type) {
+        const ctx = getAudioCtx();
+        if (!ctx) return;
         try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
             const presets = {
                 add: [523.25, 0.15, 0.12], delete: [293.66, 0.2, 0.1],
                 toggle: [659.25, 0.08, 0.08], copy: [880, 0.12, 0.1],
@@ -205,7 +235,26 @@
         'interrogationTimeStart', 'interrogationTimeEnd'
     ];
 
+    let _saveTimer = null;
     function saveSettings() {
+        if (_saveTimer) return;
+        _saveTimer = setTimeout(() => {
+            _saveTimer = null;
+            try {
+                const data = {};
+                STORAGE_FIELDS.forEach(id => {
+                    const el = $(id);
+                    if (el) data[id] = el.value;
+                });
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (e) {
+                console.warn('Ошибка сохранения:', e);
+            }
+        }, 400);
+    }
+
+    function saveSettingsNow() {
+        if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
         try {
             const data = {};
             STORAGE_FIELDS.forEach(id => {
@@ -213,9 +262,7 @@
                 if (el) data[id] = el.value;
             });
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        } catch (e) {
-            console.warn('Ошибка сохранения:', e);
-        }
+        } catch (e) {}
     }
 
     function loadSettings() {
@@ -229,7 +276,6 @@
             });
             return true;
         } catch (e) {
-            console.warn('Ошибка загрузки:', e);
             return false;
         }
     }
@@ -246,20 +292,13 @@
         const isValid = value !== '';
         const errorEl = $(input.id + 'Error');
         
-        // Ошибку показываем ТОЛЬКО если поле не пустое, но невалидное, 
-        // ИЛИ если пользователь уже взаимодействовал — но проще: показываем при невалидности, только если поле "трогали"
-        // По ТЗ: показывать ошибку только при наличии data-show-error="true" или при попытке отправки.
-        // Для простоты — показываем только при наличии класса error, который выставляется вручную.
-        
         input.classList.toggle('error', !isValid);
-        input.classList.toggle('valid', isValid);
+        input.classList.toggle('valid', isValid && value !== '');
         
-        // Показываем ошибку только если поле было "тронуто" (has been interacted with)
         if (errorEl) {
             const touched = input.dataset.touched === 'true';
             errorEl.classList.toggle('field__error--show', !isValid && touched);
         }
-        
         return isValid;
     }
 
@@ -279,7 +318,7 @@
     }
 
     function validateActions() {
-        const items = $$('.obligation-item', $('obligationsContainer'));
+        const items = DOM.obligationsContainer.querySelectorAll('.obligation-item');
         const badge = $('actionsValidation');
         const valid = items.length > 0;
         if (badge) {
@@ -290,7 +329,7 @@
     }
 
     function validateWantedList() {
-        const items = $$('.wanted-item', $('wantedContainer'));
+        const items = DOM.wantedContainer.querySelectorAll('.wanted-item');
         const badge = $('wantedListValidation');
         const valid = items.length > 0;
         if (badge) {
@@ -300,13 +339,18 @@
         return valid;
     }
 
+    let _validateTimer = null;
     function validateAll() {
-        validateSection($('decreeMainSection'), 'decreeMainValidation');
-        validateSection($('decreeInterrogationSection'), 'interrogationValidation');
-        validateActions();
-        validateSection($('wantedSection'), 'wantedInfoValidation');
-        validateWantedList();
-        updateFinalChecklist();
+        if (_validateTimer) return;
+        _validateTimer = setTimeout(() => {
+            _validateTimer = null;
+            validateSection($('decreeMainSection'), 'decreeMainValidation');
+            validateSection($('decreeInterrogationSection'), 'interrogationValidation');
+            validateActions();
+            validateSection($('wantedSection'), 'wantedInfoValidation');
+            validateWantedList();
+            updateFinalChecklist();
+        }, 100);
     }
 
     // ============================================================
@@ -331,7 +375,7 @@
                 total++;
             });
 
-            const actions = $$('.obligation-item', $('obligationsContainer'));
+            const actions = DOM.obligationsContainer.querySelectorAll('.obligation-item');
             if (actions.length > 0) filled++;
             total++;
         } else if (state.currentTab === 'wanted') {
@@ -340,7 +384,7 @@
                 if (inp.value.trim()) filled++;
                 total++;
             });
-            const wanted = $$('.wanted-item', $('wantedContainer'));
+            const wanted = DOM.wantedContainer.querySelectorAll('.wanted-item');
             if (wanted.length > 0) filled++;
             total++;
         } else {
@@ -352,8 +396,8 @@
         }
 
         const pct = total > 0 ? Math.min(Math.round((filled / total) * 100), 100) : 0;
-        $('progressFill').style.width = pct + '%';
-        $('progressPct').textContent = pct + '%';
+        DOM.progressFill.style.width = pct + '%';
+        DOM.progressPct.textContent = pct + '%';
     }
 
     function updateFinalChecklist() {
@@ -383,11 +427,16 @@
         const total = checks.length;
         const pct = Math.round((validCount / total) * 100);
 
-        if ($('finalProgressFill')) $('finalProgressFill').style.width = pct + '%';
-        if ($('finalProgressPct')) $('finalProgressPct').textContent = pct + '%';
-        if ($('finalValidCount')) $('finalValidCount').textContent = validCount;
-        if ($('finalTotalCount')) $('finalTotalCount').textContent = total;
-        if ($('finalInvalidCount')) $('finalInvalidCount').textContent = total - validCount;
+        const fp = $('finalProgressFill');
+        if (fp) fp.style.width = pct + '%';
+        const fpp = $('finalProgressPct');
+        if (fpp) fpp.textContent = pct + '%';
+        const fvc = $('finalValidCount');
+        if (fvc) fvc.textContent = validCount;
+        const ftc = $('finalTotalCount');
+        if (ftc) ftc.textContent = total;
+        const fic = $('finalInvalidCount');
+        if (fic) fic.textContent = total - validCount;
     }
 
     // ============================================================
@@ -410,15 +459,14 @@
         container.addEventListener('dragend', e => {
             const item = e.target.closest('.obligation-item, .wanted-item');
             if (item) item.classList.remove('dragging');
-            $$('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
         });
 
         container.addEventListener('dragover', e => {
             e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
             const item = e.target.closest('.obligation-item, .wanted-item');
             if (item && item !== draggedItem) {
-                $$('.drag-over').forEach(el => el.classList.remove('drag-over'));
+                container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
                 item.classList.add('drag-over');
             }
         });
@@ -432,20 +480,19 @@
             e.preventDefault();
             const item = e.target.closest('.obligation-item, .wanted-item');
             if (!item || !draggedItem || item === draggedItem) {
-                $$('.drag-over').forEach(el => el.classList.remove('drag-over'));
+                container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
                 return;
             }
             const items = Array.from(container.children);
             const fromIdx = items.indexOf(draggedItem);
             const toIdx = items.indexOf(item);
-            if (fromIdx < toIdx) {
-                container.insertBefore(draggedItem, item.nextSibling);
-            } else {
-                container.insertBefore(draggedItem, item);
-            }
+            if (fromIdx < toIdx) container.insertBefore(draggedItem, item.nextSibling);
+            else container.insertBefore(draggedItem, item);
+            
             if (container.id === 'obligationsContainer') renumberObligations();
             else renumberWanted();
-            $$('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            
+            container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
             draggedItem = null;
         });
     }
@@ -525,13 +572,15 @@
             const name = div.querySelector('.obligation-name').value || '—';
             const faction = div.querySelector('.obligation-faction')?.value || '—';
             const tc = getTypeClass(type);
-            div.querySelector('.compact-content .type-badge').textContent = type;
-            div.querySelector('.compact-content .type-badge').className = 'type-badge ' + tc;
+            const badge = div.querySelector('.compact-content .type-badge');
+            badge.textContent = type;
+            badge.className = 'type-badge ' + tc;
             div.querySelector('.compact-content .info .hl').textContent = faction;
             const nameSpan = div.querySelector('.compact-content .info span:last-child');
             if (nameSpan) nameSpan.textContent = name;
-            div.querySelector('.expanded-content .header-row .badge').textContent = type;
-            div.querySelector('.expanded-content .header-row .badge').className = 'badge ' + tc;
+            const eb = div.querySelector('.expanded-content .header-row .badge');
+            eb.textContent = type;
+            eb.className = 'badge ' + tc;
         }
 
         function updateExtraFields() {
@@ -583,8 +632,8 @@
             }
             extraContainer.innerHTML = extraHtml;
             extraContainer.querySelectorAll('input, select').forEach(el => {
-                el.addEventListener('input', () => { updateCompactView(); regenerate(); });
-                el.addEventListener('change', () => { updateCompactView(); regenerate(); });
+                el.addEventListener('input', () => { updateCompactView(); scheduleRegenerate(); });
+                el.addEventListener('change', () => { updateCompactView(); scheduleRegenerate(); });
             });
             updateCompactView();
         }
@@ -592,11 +641,11 @@
         typeSelect.addEventListener('change', () => {
             updateExtraFields();
             updateCompactView();
-            regenerate();
+            scheduleRegenerate();
         });
 
         div.querySelectorAll('input, select').forEach(el => {
-            el.addEventListener('input', () => { updateCompactView(); regenerate(); });
+            el.addEventListener('input', () => { updateCompactView(); scheduleRegenerate(); });
         });
 
         updateExtraFields();
@@ -605,10 +654,10 @@
 
     function addObligation(data) {
         const el = createObligationElement(data || null);
-        $('obligationsContainer').appendChild(el);
-        state.obligationCounter = $$('.obligation-item', $('obligationsContainer')).length;
-        $('actionsCount').textContent = state.obligationCounter;
-        regenerate();
+        DOM.obligationsContainer.appendChild(el);
+        state.obligationCounter = DOM.obligationsContainer.querySelectorAll('.obligation-item').length;
+        DOM.actionsCount.textContent = state.obligationCounter;
+        scheduleRegenerate();
         updateProgress();
         saveSettings();
         validateAll();
@@ -627,14 +676,14 @@
     }
 
     function renumberObligations() {
-        const items = $$('.obligation-item', $('obligationsContainer'));
+        const items = DOM.obligationsContainer.querySelectorAll('.obligation-item');
         items.forEach((item, i) => {
             item.querySelector('.compact-content .num').textContent = String(i + 1).padStart(2, '0');
             item.querySelector('.expanded-content .num-big').textContent = `#${String(i + 1).padStart(2, '0')}`;
         });
         state.obligationCounter = items.length;
-        $('actionsCount').textContent = items.length;
-        regenerate();
+        DOM.actionsCount.textContent = items.length;
+        scheduleRegenerate();
         updateProgress();
         saveSettings();
         validateAll();
@@ -721,11 +770,11 @@
         }
 
         [verdictSelect, termInput].forEach(el => {
-            el.addEventListener('input', () => { updateView(); regenerate(); });
-            el.addEventListener('change', () => { updateView(); regenerate(); });
+            el.addEventListener('input', () => { updateView(); scheduleRegenerate(); });
+            el.addEventListener('change', () => { updateView(); scheduleRegenerate(); });
         });
         div.querySelectorAll('.wanted-name, .wanted-passport, .wanted-articles').forEach(el => {
-            el.addEventListener('input', () => { updateView(); regenerate(); });
+            el.addEventListener('input', () => { updateView(); scheduleRegenerate(); });
         });
 
         updateView();
@@ -734,10 +783,10 @@
 
     function addWanted(data) {
         const el = createWantedElement(data || null);
-        $('wantedContainer').appendChild(el);
-        state.wantedCounter = $$('.wanted-item', $('wantedContainer')).length;
-        $('wantedCount').textContent = state.wantedCounter;
-        regenerate();
+        DOM.wantedContainer.appendChild(el);
+        state.wantedCounter = DOM.wantedContainer.querySelectorAll('.wanted-item').length;
+        DOM.wantedCount.textContent = state.wantedCounter;
+        scheduleRegenerate();
         updateProgress();
         saveSettings();
         validateAll();
@@ -756,14 +805,14 @@
     }
 
     function renumberWanted() {
-        const items = $$('.wanted-item', $('wantedContainer'));
+        const items = DOM.wantedContainer.querySelectorAll('.wanted-item');
         items.forEach((item, i) => {
             item.querySelector('.compact-content .num').textContent = String(i + 1).padStart(2, '0');
             item.querySelector('.expanded-content .num-big').textContent = `#${String(i + 1).padStart(2, '0')}`;
         });
         state.wantedCounter = items.length;
-        $('wantedCount').textContent = items.length;
-        regenerate();
+        DOM.wantedCount.textContent = items.length;
+        scheduleRegenerate();
         updateProgress();
         saveSettings();
         validateAll();
@@ -774,7 +823,7 @@
     // ============================================================
     
     function collectObligations() {
-        const items = $$('.obligation-item', $('obligationsContainer'));
+        const items = DOM.obligationsContainer.querySelectorAll('.obligation-item');
         const result = [];
         items.forEach(item => {
             const type = item.querySelector('.obligation-type')?.value || '';
@@ -797,7 +846,7 @@
     }
 
     function collectWanted() {
-        const items = $$('.wanted-item', $('wantedContainer'));
+        const items = DOM.wantedContainer.querySelectorAll('.wanted-item');
         const result = [];
         items.forEach(item => {
             result.push({
@@ -819,14 +868,11 @@
         if (!list.length) return '—';
         return list.map((ob, i) => {
             const index = i + 1;
-            let template = TYPE_TEMPLATES[ob.type] || '{index}. {name}';
+            const template = TYPE_TEMPLATES[ob.type] || '{index}. {name}';
             const role = ob.faction === 'Гражданин' ? 'гражданина' : 'сотрудника';
             const data = {
-                index,
-                type: ob.type || 'Запрос',
-                name: ob.name || '—',
-                passport: ob.passport || '—',
-                role
+                index, type: ob.type || 'Запрос', name: ob.name || '—',
+                passport: ob.passport || '—', role
             };
             if (ob.type === 'Уведомление' || ob.type === 'Запрет на увольнение') {
                 data.faction = ob.faction || '—';
@@ -860,19 +906,25 @@
     }
 
     // ============================================================
-    // ГЕНЕРАЦИЯ
+    // ГЕНЕРАЦИЯ (с requestAnimationFrame)
     // ============================================================
     
+    let _regenRaf = null;
+    function scheduleRegenerate() {
+        if (_regenRaf) return;
+        _regenRaf = requestAnimationFrame(() => {
+            _regenRaf = null;
+            regenerate();
+        });
+    }
+
     function regenerate() {
         const currentDate = getMoscowDate();
         let signatureFormatted = '';
         const sigLink = $('prosecutorSignatureLink').value.trim();
         const sigText = $('prosecutorSignature').value.trim();
-        if (sigLink) {
-            signatureFormatted = `[IMG width="350px" size="1200x1079"]${sigLink}[/IMG]`;
-        } else if (sigText) {
-            signatureFormatted = sigText;
-        }
+        if (sigLink) signatureFormatted = `[IMG width="350px" size="1200x1079"]${sigLink}[/IMG]`;
+        else if (sigText) signatureFormatted = sigText;
 
         let result = '';
 
@@ -930,7 +982,7 @@
             result = result.replace(/\{obligations\}/g, renderObligations(collectObligations()));
         }
 
-        $('outputDisplay').textContent = result;
+        DOM.outputDisplay.textContent = result;
         return result;
     }
 
@@ -950,12 +1002,11 @@
                     $(id).style.display = key === state.currentTab ? 'flex' : 'none';
                 });
 
-                const app = $('appContainer');
                 if (state.currentTab === 'wanted') {
-                    app.classList.add('wanted-mode');
+                    DOM.appContainer.classList.add('wanted-mode');
                     document.body.style.background = '#0f1a26';
                 } else {
-                    app.classList.remove('wanted-mode');
+                    DOM.appContainer.classList.remove('wanted-mode');
                     document.body.style.background = '#0b1622';
                 }
 
@@ -1032,13 +1083,13 @@
             $('wantedCourtType').value = 'окружного суда';
             $('interrogationJudgeRank').value = 'окружного судьи';
             $('interrogationCourtType').value = 'окружной';
-            $('obligationsContainer').innerHTML = '';
-            $('wantedContainer').innerHTML = '';
+            DOM.obligationsContainer.innerHTML = '';
+            DOM.wantedContainer.innerHTML = '';
             state.obligationCounter = 0;
             state.wantedCounter = 0;
-            $('actionsCount').textContent = '0';
-            $('wantedCount').textContent = '0';
-            saveSettings();
+            DOM.actionsCount.textContent = '0';
+            DOM.wantedCount.textContent = '0';
+            saveSettingsNow();
             regenerate();
             updateProgress();
             validateAll();
@@ -1046,7 +1097,7 @@
 
         $('saveSettingsBtn').addEventListener('click', () => {
             playSound('save');
-            saveSettings();
+            saveSettingsNow();
             regenerate();
             closeModal($('settingsModal'));
             updateProgress();
@@ -1054,7 +1105,7 @@
         });
 
         $('copyBtn').addEventListener('click', async () => {
-            const code = $('outputDisplay').textContent;
+            const code = DOM.outputDisplay.textContent;
             if (!code || !code.trim()) { alert('Нет сгенерированного текста.'); return; }
             try {
                 await navigator.clipboard.writeText(code);
@@ -1072,31 +1123,54 @@
             updateProgress();
         });
 
-        // Помечаем поля как "тронутые" при взаимодействии
+        // Помечаем поля как "тронутые"
         $$('input[data-required="true"], select[data-required="true"], textarea[data-required="true"]').forEach(inp => {
             inp.addEventListener('blur', () => {
                 inp.dataset.touched = 'true';
                 validateField(inp);
             });
-            inp.addEventListener('input', () => {
-                inp.dataset.touched = 'true';
-                validateField(inp);
-            });
         });
 
-        // Автообновление
-        const inputs = $$('input, select, textarea');
-        let timer = null;
-        inputs.forEach(inp => {
-            inp.addEventListener('input', () => {
-                clearTimeout(timer);
-                timer = setTimeout(() => {
-                    regenerate();
-                    updateProgress();
-                    saveSettings();
-                    validateAll();
-                }, 200);
-            });
+        // Делегирование ввода через родительский контейнер (ОПТИМИЗАЦИЯ)
+        document.addEventListener('input', (e) => {
+            const t = e.target;
+            if (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA') {
+                if (t.dataset.required === 'true') t.dataset.touched = 'true';
+                scheduleRegenerate();
+                scheduleProgress();
+                saveSettings();
+                scheduleValidate();
+            }
+        });
+
+        document.addEventListener('change', (e) => {
+            const t = e.target;
+            if (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA') {
+                if (t.dataset.required === 'true') t.dataset.touched = 'true';
+                scheduleRegenerate();
+                scheduleProgress();
+                saveSettings();
+                scheduleValidate();
+            }
+        });
+    }
+
+    // Троттлинг для прогресса и валидации
+    let _progressRaf = null;
+    function scheduleProgress() {
+        if (_progressRaf) return;
+        _progressRaf = requestAnimationFrame(() => {
+            _progressRaf = null;
+            updateProgress();
+        });
+    }
+
+    let _validateRaf = null;
+    function scheduleValidate() {
+        if (_validateRaf) return;
+        _validateRaf = requestAnimationFrame(() => {
+            _validateRaf = null;
+            validateAll();
         });
     }
 
@@ -1105,6 +1179,8 @@
     // ============================================================
     
     function init() {
+        cacheDOM();
+        
         window.addEventListener('load', () => {
             $('loader').classList.add('loader--hidden');
         });
@@ -1115,22 +1191,21 @@
         initTabs();
         initModals();
         initEvents();
-        initDragDrop($('obligationsContainer'));
-        initDragDrop($('wantedContainer'));
+        initDragDrop(DOM.obligationsContainer);
+        initDragDrop(DOM.wantedContainer);
 
         regenerate();
         updateProgress();
         validateAll();
 
         setTimeout(() => {
-            state.obligationCounter = $$('.obligation-item', $('obligationsContainer')).length;
-            state.wantedCounter = $$('.wanted-item', $('wantedContainer')).length;
-            $('actionsCount').textContent = state.obligationCounter;
-            $('wantedCount').textContent = state.wantedCounter;
+            state.obligationCounter = DOM.obligationsContainer.querySelectorAll('.obligation-item').length;
+            state.wantedCounter = DOM.wantedContainer.querySelectorAll('.wanted-item').length;
+            DOM.actionsCount.textContent = state.obligationCounter;
+            DOM.wantedCount.textContent = state.wantedCounter;
         }, 50);
     }
 
-    // Публичный API для inline-обработчиков
     window.USMS = {
         toggleObligation,
         toggleWanted,
