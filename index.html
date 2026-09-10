@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USMS · Генератор постановлений v3.0</title>
+    <title>USMS · Генератор постановлений v3.1</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -33,7 +33,7 @@
         <!-- ===== TOP BAR ===== -->
         <header class="app-header">
             <div class="app-header__title">
-                <h1>⚖️ United States Marshals Service <span>Генератор v3.0</span></h1>
+                <h1>⚖️ United States Marshals Service <span>Генератор v3.1</span></h1>
                 <p class="app-header__subhead">Разработано Dante DeRosse · .dantezzz.</p>
             </div>
             <div class="app-header__actions">
@@ -144,14 +144,46 @@
                         </div>
                     </div>
 
-                    <!-- ДОПРОС -->
+                    <!-- ДОПРОС (с перенесёнными полями) -->
                     <div id="decreeInterrogationSection" style="display: none;">
                         <div class="card">
                             <div class="card__title">
                                 🎙️ Данные допроса
                                 <span class="badge badge--partial" id="interrogationValidation">⏳ Частично</span>
                             </div>
-                            
+
+                            <!-- Перенесённые данные из постановления -->
+                            <div class="field">
+                                <label>Имя Фамилия судьи <span class="req">*</span></label>
+                                <input type="text" id="interrogationJudgeName" placeholder="Dante DeRosse" data-required="true">
+                                <div class="field__error" id="interrogationJudgeNameError">Обязательное поле</div>
+                            </div>
+                            <div class="field">
+                                <label>Должность судьи <span class="req">*</span></label>
+                                <select id="interrogationJudgeRank" data-required="true">
+                                    <option value="окружного судьи">Окружной судья</option>
+                                    <option value="председателя окружного суда">Председатель окружного суда</option>
+                                    <option value="верховного Судьи">Верховный судья</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Тип суда <span class="req">*</span></label>
+                                <select id="interrogationCourtType" data-required="true">
+                                    <option value="окружной">Окружной</option>
+                                    <option value="кассационный">Кассационный</option>
+                                    <option value="апелляционный">Апелляционный</option>
+                                    <option value="верховный">Верховный</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Номер искового заявления <span class="req">*</span></label>
+                                <input type="text" id="interrogationCaseId" placeholder="2600" data-required="true">
+                                <div class="field__error" id="interrogationCaseIdError">Обязательное поле</div>
+                            </div>
+
+                            <hr style="border:none; border-top:1px solid var(--accent-06); margin:16px 0;">
+
+                            <!-- Данные допрашиваемого -->
                             <div class="field">
                                 <label>Имя допрашиваемого <span class="req">*</span></label>
                                 <input type="text" id="interrogationName" placeholder="Имя Фамилия" data-required="true">
@@ -179,6 +211,7 @@
                             </div>
                         </div>
                     </div>
+                </section>
 
                 <!-- ===== РОЗЫСК ===== -->
                 <section id="wantedSection" class="tab-content" style="display: none;">
@@ -354,7 +387,7 @@
                 <h3>🎙️ Допрос</h3>
                 <ul>
                     <li>Заполните данные допрашиваемого</li>
-                    <li>Укажите время, место и присутствующих</li>
+                    <li>Укажите дату и время</li>
                 </ul>
                 <h3>🔍 Розыск</h3>
                 <ul>
