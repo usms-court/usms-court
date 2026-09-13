@@ -1,16 +1,16 @@
 /* ============================================================
-   USMS GENERATOR — SCRIPT v4.2 (тумблеры в шаблонах)
+   USMS GENERATOR — SCRIPT v3.6 (FINAL с действиями)
    ============================================================ */
 
 (function () {
     'use strict';
 
-    const STORAGE_KEY = 'usms_generator_settings_v4';
-
     // ============================================================
-    // ОСНОВНЫЕ ШАБЛОНЫ BBCode
+    // КОНСТАНТЫ
     // ============================================================
     
+    const STORAGE_KEY = 'usms_generator_settings_v3';
+
     const DEFAULT_TEMPLATE = `
 [TABLE width="100%"]
 [TR]
@@ -96,21 +96,10 @@
 `;
 
     // ============================================================
-    // ДЕЙСТВИЯ ДЛЯ ПОСТАНОВЛЕНИЯ
-    // ============================================================
-    
-    const TYPE_TEMPLATES = {
-        'Уведомление': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Уведомляю {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] о начатом досудебном разбирательстве.[/B]',
-        'Боди-Камера': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Требую {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}], предоставить записи с боди-камеры за [COLOR=rgb(184, 49, 47)]{date_only}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR].[/B]',
-        'Запрет на увольнение': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Уведомляю {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] об установленном [COLOR=rgb(184, 49, 47)]запрете на увольнение[/COLOR] на срок 72 часа.[/B]',
-        'Отстранение': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Обязать [COLOR=rgb(41, 105, 176)]{supervisor_rank}[/COLOR] [COLOR=rgb(184, 49, 47)]{supervisor_name}[/COLOR] отстранить {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] и [COLOR=rgb(184, 49, 47)]понизить[/COLOR] его на первый порядковый ранг.[/B]',
-        'Допрос': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Обязать {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] явиться в Капитолий [COLOR=rgb(184, 49, 47)]{interrogationDate}[/COLOR] в период с [COLOR=rgb(184, 49, 47)]{interrogationTimeStart}[/COLOR] до [COLOR=rgb(184, 49, 47)]{interrogationTimeEnd}[/COLOR] для прохождения допроса, перед этим согласовав удобное обеим сторонам время встречи официальным письмом на эл. почту сотрудника USMS.[/B]'
-    };
-
-    // ============================================================
     // ДЕЙСТВИЯ ДЛЯ ИТОГОВОГО
     // ============================================================
     
+    // Список действий итогового
     const FINAL_ACTION_LIST = [
         { id: 'case', name: 'Получение личного дела и кадровой выписки, уведомление' },
         { id: 'bodycam', name: 'Получение записи с боди-камеры' },
@@ -124,66 +113,123 @@
         { id: 'interrogation', name: 'Допрос' }
     ];
 
+    // Какие действия поддерживают "Не удалось"
     const FINAL_SUPPORTS_FAIL = {
-        case: true, bodycam: true, ban: true, cams: false,
-        offense: true, reprimand: true, discipline: true,
-        dvr: false, surveillance: false, interrogation: true
+        case: true,
+        bodycam: true,
+        ban: true,
+        cams: false,
+        offense: true,
+        reprimand: true,
+        discipline: true,
+        dvr: false,
+        surveillance: false,
+        interrogation: true
     };
 
+    // Поля, которые показываются для каждого действия (для формы ввода)
+    // Поля: faction (селект), name (input), passport (input), date (date), 
+    //       time_from, time_to, location (input), car_number (input),
+    //       reason (textarea для "Не удалось"), role (для допроса - auto)
     const FINAL_FIELDS_CONFIG = {
-        case: { success: ['faction', 'name', 'passport'], fail: ['faction', 'name', 'passport'] },
-        bodycam: { success: ['faction', 'name', 'passport', 'date', 'time_from', 'time_to'], fail: ['faction', 'name', 'passport', 'date', 'time_from', 'time_to', 'reason'] },
-        ban: { success: ['faction', 'name', 'passport'], fail: ['faction', 'name', 'passport'] },
-        cams: { success: ['location', 'date', 'time_from', 'time_to'], fail: [] },
-        offense: { success: ['faction', 'name', 'passport'], fail: ['faction', 'name', 'passport', 'reason'] },
-        reprimand: { success: ['date', 'name'], fail: ['date', 'name', 'reason'] },
-        discipline: { success: ['faction'], fail: ['faction', 'reason'] },
-        dvr: { success: ['car_number', 'date', 'time_from', 'time_to'], fail: [] },
-        surveillance: { success: ['location', 'date', 'time_from', 'time_to'], fail: [] },
-        interrogation: { success: ['faction', 'name', 'passport'], fail: ['faction', 'name', 'passport', 'reason'] }
-    };
-
-    const FINAL_TEMPLATES = {
         case: {
-            success: 'Удалось получить личное дело и кадровую выписку, а также оповестить о начатом досудебном разбирательстве сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}].',
-            fail: 'Не удалось получить личное дело и кадровую выписку сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}]. Уведомление о начатом досудебном разбирательстве направлено.'
+            success: ['faction', 'name', 'passport'],
+            fail: ['faction', 'name', 'passport']
         },
         bodycam: {
-            success: 'Удалось получить запись с боди-камеры сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR], относящуюся к задержанию истца.',
-            fail: 'Не удалось получить запись с боди-камеры сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR], относящуюся к задержанию истца, в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].'
+            success: ['faction', 'name', 'passport', 'date', 'time_from', 'time_to'],
+            fail: ['faction', 'name', 'passport', 'date', 'time_from', 'time_to', 'reason']
         },
         ban: {
-            success: 'Удалось установить запрет на увольнение сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] на срок 72 часа.',
-            fail: 'Не удалось установить запрет на увольнение сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] в связи с расторжением трудового договора до настоящего постановления.'
+            success: ['faction', 'name', 'passport'],
+            fail: ['faction', 'name', 'passport']
         },
         cams: {
-            success: 'Удалось запросить и изъять записи с камер [COLOR=rgb(184, 49, 47)]{location}[/COLOR] за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] в период с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] до [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR].',
+            success: ['location', 'date', 'time_from', 'time_to'],
+            fail: []
+        },
+        offense: {
+            success: ['faction', 'name', 'passport'],
+            fail: ['faction', 'name', 'passport', 'reason']
+        },
+        reprimand: {
+            success: ['date', 'name'],
+            fail: ['date', 'name', 'reason']
+        },
+        discipline: {
+            success: ['faction'],
+            fail: ['faction', 'reason']
+        },
+        dvr: {
+            success: ['car_number', 'date', 'time_from', 'time_to'],
+            fail: []
+        },
+        surveillance: {
+            success: ['location', 'date', 'time_from', 'time_to'],
+            fail: []
+        },
+        interrogation: {
+            success: ['faction', 'name', 'passport'],
+            fail: ['faction', 'name', 'passport', 'reason']
+        }
+    };
+
+    // Шаблоны финального текста
+    // Переменные: {faction}, {name}, {passport}, {date}, {time_from}, {time_to},
+    //             {location}, {car_number}, {reason}, {role}
+    const FINAL_TEMPLATES = {
+        case: {
+            success: '[B]Удалось получить личное дело и кадровую выписку, а также оповестить о начатом досудебном разбирательстве сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}].[/B]',
+            fail: '[B]Не удалось получить личное дело и кадровую выписку сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}]. Уведомление о начатом досудебном разбирательстве направлено.[/B]'
+        },
+        bodycam: {
+            success: '[B]Удалось получить запись с боди-камеры сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR], относящуюся к задержанию истца.[/B]',
+            fail: '[B]Не удалось получить запись с боди-камеры сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR], относящуюся к задержанию истца, в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].[/B]'
+        },
+        ban: {
+            success: '[B]Удалось установить запрет на увольнение сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] на срок 72 часа.[/B]',
+            fail: '[B]Не удалось установить запрет на увольнение сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] в связи с расторжением трудового договора до настоящего постановления.[/B]'
+        },
+        cams: {
+            success: '[B]Удалось запросить и изъять записи с камер [COLOR=rgb(184, 49, 47)]{location}[/COLOR] за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] в период с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] до [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR].[/B]',
             fail: ''
         },
         offense: {
-            success: 'Удалось запросить все материалы правонарушения истца у сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}].',
-            fail: 'Не удалось запросить все материалы правонарушения истца у сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].'
+            success: '[B]Удалось запросить все материалы правонарушения истца у сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}].[/B]',
+            fail: '[B]Не удалось запросить все материалы правонарушения истца у сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].[/B]'
         },
         reprimand: {
-            success: 'Удалось запросить и приобщить к материалам дела описание выговора, вынесенного истцу [COLOR=rgb(184, 49, 47)]{date}[/COLOR] сотрудником [COLOR=rgb(184, 49, 47)]{name}[/COLOR], с указанием установленного порядка его отработки.',
-            fail: 'Не удалось запросить и приобщить к материалам дела описание выговора, вынесенного истцу [COLOR=rgb(184, 49, 47)]{date}[/COLOR] сотрудником [COLOR=rgb(184, 49, 47)]{name}[/COLOR], в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].'
+            success: '[B]Удалось запросить и приобщить к материалам дела описание выговора, вынесенного истцу [COLOR=rgb(184, 49, 47)]{date}[/COLOR] сотрудником [COLOR=rgb(184, 49, 47)]{name}[/COLOR], с указанием установленного порядка его отработки.[/B]',
+            fail: '[B]Не удалось запросить и приобщить к материалам дела описание выговора, вынесенного истцу [COLOR=rgb(184, 49, 47)]{date}[/COLOR] сотрудником [COLOR=rgb(184, 49, 47)]{name}[/COLOR], в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].[/B]'
         },
         discipline: {
-            success: 'Удалось получить отчётность [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] по дисциплинарным взысканиям (выговорам).',
-            fail: 'Не удалось получить отчётность [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] по дисциплинарным взысканиям (выговорам) в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].'
+            success: '[B]Удалось получить отчётность [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] по дисциплинарным взысканиям (выговорам).[/B]',
+            fail: '[B]Не удалось получить отчётность [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] по дисциплинарным взысканиям (выговорам) в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].[/B]'
         },
         dvr: {
-            success: 'Удалось получить запись с видеорегистратора машины с государственным номером "[COLOR=rgb(184, 49, 47)]{car_number}[/COLOR]" за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR].',
+            success: '[B]Удалось получить запись с видеорегистратора машины с государственным номером "[COLOR=rgb(184, 49, 47)]{car_number}[/COLOR]" за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR].[/B]',
             fail: ''
         },
         surveillance: {
-            success: 'Удалось получить запись с камер видеонаблюдения, находящихся в [COLOR=rgb(184, 49, 47)]{location}[/COLOR], за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR].',
+            success: '[B]Удалось получить запись с камер видеонаблюдения, находящихся в [COLOR=rgb(184, 49, 47)]{location}[/COLOR], за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR].[/B]',
             fail: ''
         },
         interrogation: {
-            success: 'Удалось произвести допрос [COLOR=rgb(41, 105, 176)]{role}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}].',
-            fail: 'Не удалось произвести допрос [COLOR=rgb(41, 105, 176)]{role}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].'
+            success: '[B]Удалось произвести допрос [COLOR=rgb(41, 105, 176)]{role}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}].[/B]',
+            fail: '[B]Не удалось произвести допрос [COLOR=rgb(41, 105, 176)]{role}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].[/B]'
         }
+    };
+
+    // ============================================================
+    // ДЕЙСТВИЯ ДЛЯ ПОСТАНОВЛЕНИЯ
+    // ============================================================
+    
+    const TYPE_TEMPLATES = {
+        'Уведомление': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Уведомляю {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] о начатом досудебном разбирательстве.[/B]',
+        'Боди-Камера': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Требую {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}], предоставить записи с боди-камеры за [COLOR=rgb(184, 49, 47)]{date_only}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR].[/B]',
+        'Запрет на увольнение': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Уведомляю {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] об установленном [COLOR=rgb(184, 49, 47)]запрете на увольнение[/COLOR] на срок 72 часа.[/B]',
+        'Отстранение': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Обязать [COLOR=rgb(41, 105, 176)]{supervisor_rank}[/COLOR] [COLOR=rgb(184, 49, 47)]{supervisor_name}[/COLOR] отстранить {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] и [COLOR=rgb(184, 49, 47)]понизить[/COLOR] его на первый порядковый ранг.[/B]',
+        'Допрос': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Обязать {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] явиться в Капитолий [COLOR=rgb(184, 49, 47)]{interrogationDate}[/COLOR] в период с [COLOR=rgb(184, 49, 47)]{interrogationTimeStart}[/COLOR] до [COLOR=rgb(184, 49, 47)]{interrogationTimeEnd}[/COLOR] для прохождения допроса, перед этим согласовав удобное обеим сторонам время встречи официальным письмом на эл. почту сотрудника USMS.[/B]'
     };
 
     const SUPERVISOR_RANKS = {
@@ -191,95 +237,6 @@
         'SASPA': 'Директора', 'FIB': 'Директора', 'GOV': 'Губернатора',
         'EMS LS': 'Главного врача', 'EMS SS': 'Главного врача',
         'Гражданин': 'Руководства (не требуется)'
-    };
-
-    const FACTION_OPTIONS = ['LSPD', 'LSSD', 'SANG', 'SASPA', 'FIB', 'GOV', 'EMS LS', 'EMS SS', 'Гражданин'];
-
-    // ============================================================
-    // КОНФИГ ПОЛЕЙ ДЛЯ КАЖДОГО DISCORD-ШАБЛОНА
-    // ============================================================
-    
-    const TPL_FIELDS_CONFIG = {
-        subpoena: {
-            title: '📨 Повестка в суд',
-            fields: [
-                { id: 'tplGreeting', label: 'Приветствие', type: 'select', options: ['Добрый Вечер', 'Добрый день', 'Доброе Утро'], default: 'Добрый Вечер' },
-                { id: 'tplDefendantName', label: 'Имя Фамилия ответчика', type: 'text', placeholder: 'Andrey Haters' },
-                { id: 'tplBadgeNumber', label: 'Номер жетона (без USMS-)', type: 'text', placeholder: '380938' },
-                { id: 'tplCaseId', label: 'Номер иска', type: 'text', placeholder: '2626' },
-                { id: 'tplCaseUrl', label: 'URL искового дела', type: 'text', placeholder: 'https://forum.gta5rp.com/...' },
-                { id: 'tplCourtDate', label: 'Дата заседания', type: 'date' },
-                { id: 'tplCourtTime', label: 'Время заседания', type: 'time' },
-                { id: 'tplCourtLocation', label: 'Место заседания', type: 'text', default: 'зале судебных заседаний мэрии Los Santos' }
-            ]
-        },
-        interrogation: {
-            title: '🎙️ Уведомление о допросе',
-            fields: [
-                { id: 'tplGreeting', label: 'Приветствие', type: 'select', options: ['Добрый день', 'Добрый Вечер', 'Доброе Утро'], default: 'Добрый день' },
-                { id: 'tplDefendantName', label: 'Имя Фамилия', type: 'text', placeholder: 'Simon Silverhand' },
-                { id: 'tplBadgeNumber', label: 'Номер жетона (без USMS-)', type: 'text', placeholder: '544877' },
-                { id: 'tplOrderNumber', label: 'Номер постановления', type: 'text', placeholder: '593' },
-                { id: 'tplPlace', label: 'Место проведения', type: 'text', default: 'Капитолий' },
-                { id: 'tplCourtDate', label: 'Дата явки', type: 'date' },
-                { id: 'tplTimeFrom', label: 'Время с', type: 'time' },
-                { id: 'tplTimeTo', label: 'Время до', type: 'time' }
-            ]
-        },
-        investigation: {
-            title: '🔍 Уведомление о разбирательстве',
-            fields: [
-                { id: 'tplGreeting', label: 'Приветствие', type: 'select', options: ['Добрый день', 'Добрый Вечер', 'Доброе Утро'], default: 'Добрый день' },
-                { id: 'tplDefendantName', label: 'Имя Фамилия', type: 'text', placeholder: 'Иван Иванов' },
-                { id: 'tplBadgeNumber', label: 'Номер жетона (без USMS-)', type: 'text', placeholder: '544877' },
-                { id: 'tplCaseId', label: 'Номер иска', type: 'text', placeholder: '2625' }
-            ],
-            toggles: [
-                {
-                    id: 'tplToggleBodycam',
-                    label: '☑️ Включить блок «Боди-камера»',
-                    fields: [
-                        { id: 'tplOrderNumber', label: 'Номер постановления', type: 'text', placeholder: '623' },
-                        { id: 'tplCourtDate', label: 'Дата записи', type: 'date' },
-                        { id: 'tplTimeFrom', label: 'Время с', type: 'time' },
-                        { id: 'tplTimeTo', label: 'Время по', type: 'time' }
-                    ]
-                },
-                {
-                    id: 'tplToggleBan',
-                    label: '☑️ Включить блок «Запрет на увольнение»',
-                    fields: []
-                }
-            ]
-        },
-        fine: {
-            title: '💰 Уведомление об оплате штрафа',
-            fields: [
-                { id: 'tplGreeting', label: 'Приветствие', type: 'select', options: ['Добрый день', 'Добрый Вечер', 'Доброе Утро'], default: 'Добрый день' },
-                { id: 'tplDefendantName', label: 'Имя Фамилия', type: 'text', placeholder: 'Prokhor Oopsie' },
-                { id: 'tplBadgeNumber', label: 'Номер жетона (без USMS-)', type: 'text', placeholder: '544877' },
-                { id: 'tplCaseId', label: 'Номер иска', type: 'text', placeholder: '2605' },
-                { id: 'tplCourtType', label: 'Тип суда', type: 'select', options: ['Окружного', 'Кассационного', 'Апелляционного', 'Верховного'], default: 'Окружного' },
-                { id: 'tplArticle', label: 'Статья', type: 'text', placeholder: '10.1' },
-                { id: 'tplCodeType', label: 'Кодекс', type: 'select', options: ['АК СА', 'УК СА'], default: 'АК СА' },
-                { id: 'tplAmount', label: 'Сумма штрафа', type: 'text', placeholder: '40 000' }
-            ]
-        },
-        ignored: {
-            title: '⚠️ Уведомление о невыполнении',
-            fields: [
-                { id: 'tplGreeting', label: 'Приветствие', type: 'select', options: ['Добрый день', 'Добрый Вечер', 'Доброе Утро'], default: 'Добрый день' },
-                { id: 'tplBadgeNumber', label: 'Номер жетона (без USMS-)', type: 'text', placeholder: '544877' }
-            ]
-        },
-        response: {
-            title: '📩 Ответ на запрос материалов',
-            fields: [
-                { id: 'tplGreeting', label: 'Приветствие', type: 'select', options: ['Добрый день', 'Добрый Вечер', 'Доброе Утро'], default: 'Добрый день' },
-                { id: 'tplDefendantName', label: 'Имя Фамилия', type: 'text', placeholder: 'Alexandr Kozmenko' },
-                { id: 'tplBadgeNumber', label: 'Номер жетона (без USMS-)', type: 'text', placeholder: '544877' }
-            ]
-        }
     };
 
     // ============================================================
@@ -299,7 +256,6 @@
             obligationsContainer: document.getElementById('obligationsContainer'),
             wantedContainer: document.getElementById('wantedContainer'),
             finalContainer: document.getElementById('finalContainer'),
-            tplFieldsContainer: document.getElementById('tplFieldsContainer'),
             appContainer: document.getElementById('appContainer')
         };
     }
@@ -315,8 +271,7 @@
         currentTab: 'decree',
         obligationCounter: 0,
         wantedCounter: 0,
-        finalCounter: 0,
-        tplValues: {}
+        finalCounter: 0
     };
 
     // ============================================================
@@ -348,15 +303,15 @@
         return word;
     }
 
-    function formatDate(dateStr) {
-        if (!dateStr) return '—';
-        const d = new Date(dateStr + 'T00:00:00');
-        if (isNaN(d.getTime())) return '—';
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const year = d.getFullYear();
-        return `${day}.${month}.${year}`;
-    }
+   function formatDate(dateStr) {
+       if (!dateStr) return '—';
+       const d = new Date(dateStr + 'T00:00:00');
+       if (isNaN(d.getTime())) return '—';
+       const day = String(d.getDate()).padStart(2, '0');
+       const month = String(d.getMonth() + 1).padStart(2, '0');
+       const year = d.getFullYear();
+       return `${day}.${month}.${year}`;
+   }
 
     // ============================================================
     // ЗВУКИ
@@ -404,8 +359,7 @@
         'prosecutorPosition', 'prosecutorName', 'prosecutorSignature',
         'prosecutorSignatureLink', 'prosecutorDiscord',
         'orderNumber', 'judgeName', 'judgeRank', 'courtType', 'caseId', 'faction', 'citizenName',
-        'wantedOrderNumber', 'wantedJudgeName', 'wantedJudgeRank', 'wantedCourtType', 'wantedCaseId',
-        'tplType'
+        'wantedOrderNumber', 'wantedJudgeName', 'wantedJudgeRank', 'wantedCourtType', 'wantedCaseId'
     ];
 
     let _saveTimer = null;
@@ -413,14 +367,12 @@
         if (_saveTimer) return;
         _saveTimer = setTimeout(() => {
             _saveTimer = null;
-            saveTplValues();
             try {
                 const data = {};
                 STORAGE_FIELDS.forEach(id => {
                     const el = $(id);
                     if (el) data[id] = el.value;
                 });
-                data.tplValues = state.tplValues;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             } catch (e) {}
         }, 400);
@@ -428,26 +380,14 @@
 
     function saveSettingsNow() {
         if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
-        saveTplValues();
         try {
             const data = {};
             STORAGE_FIELDS.forEach(id => {
                 const el = $(id);
                 if (el) data[id] = el.value;
             });
-            data.tplValues = state.tplValues;
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         } catch (e) {}
-    }
-
-    function saveTplValues() {
-        // Собираем все поля из контейнера шаблонов
-        if (!DOM.tplFieldsContainer) return;
-        DOM.tplFieldsContainer.querySelectorAll('input, select, textarea').forEach(el => {
-            if (el.id) {
-                state.tplValues[el.id] = el.type === 'checkbox' ? el.checked : el.value;
-            }
-        });
     }
 
     function loadSettings() {
@@ -459,7 +399,6 @@
                 const el = $(id);
                 if (el && data[id] !== undefined) el.value = data[id];
             });
-            if (data.tplValues) state.tplValues = data.tplValues;
             return true;
         } catch (e) {
             return false;
@@ -572,16 +511,10 @@
             const wanted = DOM.wantedContainer.querySelectorAll('.wanted-item');
             if (wanted.length > 0) filled++;
             total++;
-        } else if (state.currentTab === 'final') {
+        } else {
             const facts = DOM.finalContainer.querySelectorAll('.final-item');
             if (facts.length > 0) filled++;
             total++;
-        } else if (state.currentTab === 'templates') {
-            const inputs = $$('#templatesSection input, #templatesSection select, #templatesSection textarea');
-            inputs.forEach(inp => {
-                if (inp.type === 'checkbox' || inp.value.trim()) filled++;
-                total++;
-            });
         }
 
         const pct = total > 0 ? Math.min(Math.round((filled / total) * 100), 100) : 0;
@@ -649,32 +582,71 @@
     }
 
     // ============================================================
-    // ПОЛЯ ДЛЯ ИТОГОВОГО
+    // ПОЛЯ ДЛЯ ИТОГОВОГО (конфигурация -> HTML)
     // ============================================================
     
+    const FACTION_OPTIONS = ['LSPD', 'LSSD', 'SANG', 'SASPA', 'FIB', 'GOV', 'EMS LS', 'EMS SS', 'Гражданин'];
+
     function renderFinalFields(fieldList, data) {
-        if (!fieldList || !fieldList.length) return '';
         return fieldList.map(field => {
             const val = data?.[field] || '';
             switch (field) {
                 case 'faction':
-                    return `<div class="field"><label>Фракция</label><select class="final-field" data-field="faction">${FACTION_OPTIONS.map(f => `<option value="${f}" ${val === f ? 'selected' : ''}>${f}</option>`).join('')}</select></div>`;
+                    return `
+                        <div class="field">
+                            <label>Фракция</label>
+                            <select class="final-field" data-field="faction">
+                                ${FACTION_OPTIONS.map(f => `<option value="${f}" ${val === f ? 'selected' : ''}>${f}</option>`).join('')}
+                            </select>
+                        </div>`;
                 case 'name':
-                    return `<div class="field"><label>Имя Фамилия</label><input type="text" class="final-field" data-field="name" value="${val}" placeholder="Dante DeRosse"></div>`;
+                    return `
+                        <div class="field">
+                            <label>Имя Фамилия</label>
+                            <input type="text" class="final-field" data-field="name" value="${val}" placeholder="Dante DeRosse">
+                        </div>`;
                 case 'passport':
-                    return `<div class="field"><label>Паспорт</label><input type="text" class="final-field" data-field="passport" value="${val}" placeholder="380938"></div>`;
+                    return `
+                        <div class="field">
+                            <label>Паспорт</label>
+                            <input type="text" class="final-field" data-field="passport" value="${val}" placeholder="380938">
+                        </div>`;
                 case 'date':
-                    return `<div class="field"><label>Дата</label><input type="date" class="final-field" data-field="date" value="${val}"></div>`;
+                    return `
+                        <div class="field">
+                            <label>Дата</label>
+                            <input type="date" class="final-field" data-field="date" value="${val}">
+                        </div>`;
                 case 'time_from':
-                    return `<div class="field"><label>Время с</label><input type="time" class="final-field" data-field="time_from" value="${val}" step="60"></div>`;
+                    return `
+                        <div class="field">
+                            <label>Время с</label>
+                            <input type="time" class="final-field" data-field="time_from" value="${val}" step="60">
+                        </div>`;
                 case 'time_to':
-                    return `<div class="field"><label>Время по</label><input type="time" class="final-field" data-field="time_to" value="${val}" step="60"></div>`;
+                    return `
+                        <div class="field">
+                            <label>Время по</label>
+                            <input type="time" class="final-field" data-field="time_to" value="${val}" step="60">
+                        </div>`;
                 case 'location':
-                    return `<div class="field"><label>Местонахождение</label><input type="text" class="final-field" data-field="location" value="${val}" placeholder="ул. Лос-Сантос, д. 1"></div>`;
+                    return `
+                        <div class="field">
+                            <label>Местонахождение</label>
+                            <input type="text" class="final-field" data-field="location" value="${val}" placeholder="ул. Лос-Сантос, д. 1">
+                        </div>`;
                 case 'car_number':
-                    return `<div class="field"><label>Гос. номер машины</label><input type="text" class="final-field" data-field="car_number" value="${val}" placeholder="ABC 123"></div>`;
+                    return `
+                        <div class="field">
+                            <label>Гос. номер</label>
+                            <input type="text" class="final-field" data-field="car_number" value="${val}" placeholder="ABC 123">
+                        </div>`;
                 case 'reason':
-                    return `<div class="field"><label>Причина</label><textarea class="final-field" data-field="reason" rows="2" placeholder="Опишите причину...">${val}</textarea></div>`;
+                    return `
+                        <div class="field">
+                            <label>Причина</label>
+                            <textarea class="final-field" data-field="reason" rows="2" placeholder="Опишите причину...">${val}</textarea>
+                        </div>`;
                 default:
                     return '';
             }
@@ -682,7 +654,7 @@
     }
 
     // ============================================================
-    // ДЕЙСТВИЯ
+    // ДЕЙСТВИЯ (Постановление)
     // ============================================================
     
     function getSupervisorRank(faction) {
@@ -705,6 +677,7 @@
         div.dataset.id = itemId;
 
         const typeOptions = ['Уведомление', 'Боди-Камера', 'Запрет на увольнение', 'Отстранение', 'Допрос'];
+        const factionOptions = FACTION_OPTIONS;
         const currentType = data?.type || 'Уведомление';
         const typeClass = getTypeClass(currentType);
 
@@ -723,13 +696,27 @@
             </div>
             <div class="expanded-content">
                 <div class="header-row">
-                    <span class="title"><span class="num-big">#${String(state.obligationCounter + 1).padStart(2, '0')}</span>Действие</span>
+                    <span class="title">
+                        <span class="num-big">#${String(state.obligationCounter + 1).padStart(2, '0')}</span>
+                        Действие
+                    </span>
                     <span class="badge ${typeClass}" style="margin:0;">${currentType}</span>
                     <button class="collapse-btn" onclick="USMS.toggleObligation(this.closest('.obligation-item'))">▲ Свернуть</button>
                 </div>
-                <div class="field"><label>Тип</label><select class="obligation-type">${typeOptions.map(t => `<option value="${t}" ${data?.type === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-                <div class="field"><label>Имя Фамилия</label><input type="text" class="obligation-name" value="${data?.name || ''}" placeholder="Dante DeRosse"></div>
-                <div class="field"><label>Паспорт</label><input type="text" class="obligation-passport" value="${data?.passport || ''}" placeholder="380938"></div>
+                <div class="field">
+                    <label>Тип</label>
+                    <select class="obligation-type">
+                        ${typeOptions.map(t => `<option value="${t}" ${data?.type === t ? 'selected' : ''}>${t}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Имя Фамилия</label>
+                    <input type="text" class="obligation-name" value="${data?.name || ''}" placeholder="Dante DeRosse">
+                </div>
+                <div class="field">
+                    <label>Паспорт</label>
+                    <input type="text" class="obligation-passport" value="${data?.passport || ''}" placeholder="380938">
+                </div>
                 <div class="obligation-extra"></div>
             </div>
         `;
@@ -757,25 +744,68 @@
             const type = typeSelect.value;
             let extraHtml = '';
             if (type === 'Уведомление' || type === 'Запрет на увольнение') {
-                extraHtml = `<div class="field"><label>Фракция</label><select class="obligation-faction">${FACTION_OPTIONS.map(f => `<option value="${f}" ${data?.faction === f ? 'selected' : ''}>${f}</option>`).join('')}</select></div>`;
+                extraHtml = `
+                    <div class="field">
+                        <label>Фракция</label>
+                        <select class="obligation-faction">
+                            ${factionOptions.map(f => `<option value="${f}" ${data?.faction === f ? 'selected' : ''}>${f}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
             } else if (type === 'Боди-Камера') {
                 extraHtml = `
-                    <div class="field"><label>Фракция</label><select class="obligation-faction">${FACTION_OPTIONS.map(f => `<option value="${f}" ${data?.faction === f ? 'selected' : ''}>${f}</option>`).join('')}</select></div>
-                    <div class="field"><label>Дата</label><input type="date" class="obligation-date" value="${data?.date || ''}"></div>
-                    <div class="field"><label>Время с</label><input type="time" class="obligation-time-from" value="${data?.time_from || ''}" step="60"></div>
-                    <div class="field"><label>Время по</label><input type="time" class="obligation-time-to" value="${data?.time_to || ''}" step="60"></div>
+                    <div class="field">
+                        <label>Фракция</label>
+                        <select class="obligation-faction">
+                            ${factionOptions.map(f => `<option value="${f}" ${data?.faction === f ? 'selected' : ''}>${f}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Дата</label>
+                        <input type="date" class="obligation-date" value="${data?.date || ''}">
+                    </div>
+                    <div class="field">
+                        <label>Время с</label>
+                        <input type="time" class="obligation-time-from" value="${data?.time_from || ''}" step="60">
+                    </div>
+                    <div class="field">
+                        <label>Время по</label>
+                        <input type="time" class="obligation-time-to" value="${data?.time_to || ''}" step="60">
+                    </div>
                 `;
             } else if (type === 'Отстранение') {
                 extraHtml = `
-                    <div class="field"><label>Фракция</label><select class="obligation-faction">${FACTION_OPTIONS.map(f => `<option value="${f}" ${data?.faction === f ? 'selected' : ''}>${f}</option>`).join('')}</select></div>
-                    <div class="field"><label>Имя Фамилия руководства</label><input type="text" class="obligation-supervisor" value="${data?.supervisor || ''}" placeholder="Dante DeRosse"></div>
+                    <div class="field">
+                        <label>Фракция</label>
+                        <select class="obligation-faction">
+                            ${factionOptions.map(f => `<option value="${f}" ${data?.faction === f ? 'selected' : ''}>${f}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Имя Фамилия руководства</label>
+                        <input type="text" class="obligation-supervisor" value="${data?.supervisor || ''}" placeholder="Dante DeRosse">
+                    </div>
                 `;
             } else if (type === 'Допрос') {
                 extraHtml = `
-                    <div class="field"><label>Фракция</label><select class="obligation-faction">${FACTION_OPTIONS.map(f => `<option value="${f}" ${data?.faction === f ? 'selected' : ''}>${f}</option>`).join('')}</select></div>
-                    <div class="field"><label>Дата допроса</label><input type="date" class="obligation-interrogation-date" value="${data?.interrogation_date || ''}"></div>
-                    <div class="field"><label>Время с</label><input type="time" class="obligation-interrogation-time-from" value="${data?.interrogation_time_from || ''}" step="60"></div>
-                    <div class="field"><label>Время по</label><input type="time" class="obligation-interrogation-time-to" value="${data?.interrogation_time_to || ''}" step="60"></div>
+                    <div class="field">
+                        <label>Фракция</label>
+                        <select class="obligation-faction">
+                            ${factionOptions.map(f => `<option value="${f}" ${data?.faction === f ? 'selected' : ''}>${f}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Дата допроса</label>
+                        <input type="date" class="obligation-interrogation-date" value="${data?.interrogation_date || ''}">
+                    </div>
+                    <div class="field">
+                        <label>Время с</label>
+                        <input type="time" class="obligation-interrogation-time-from" value="${data?.interrogation_time_from || ''}" step="60">
+                    </div>
+                    <div class="field">
+                        <label>Время по</label>
+                        <input type="time" class="obligation-interrogation-time-to" value="${data?.interrogation_time_to || ''}" step="60">
+                    </div>
                 `;
             }
             extraContainer.innerHTML = extraHtml;
@@ -786,7 +816,12 @@
             updateCompactView();
         }
 
-        typeSelect.addEventListener('change', () => { updateExtraFields(); updateCompactView(); scheduleRegenerate(); });
+        typeSelect.addEventListener('change', () => {
+            updateExtraFields();
+            updateCompactView();
+            scheduleRegenerate();
+        });
+
         div.querySelectorAll('input, select').forEach(el => {
             el.addEventListener('input', () => { updateCompactView(); scheduleRegenerate(); });
         });
@@ -860,15 +895,36 @@
             </div>
             <div class="expanded-content">
                 <div class="header-row">
-                    <span class="title"><span class="num-big">#${String(state.wantedCounter + 1).padStart(2, '0')}</span>Разыскиваемый</span>
+                    <span class="title">
+                        <span class="num-big">#${String(state.wantedCounter + 1).padStart(2, '0')}</span>
+                        Разыскиваемый
+                    </span>
                     <span class="badge wanted-badge" style="margin:0;">${data?.verdict || 'УК СА'}</span>
                     <button class="collapse-btn" onclick="USMS.toggleWanted(this.closest('.wanted-item'))">▲ Свернуть</button>
                 </div>
-                <div class="field"><label>Имя Фамилия</label><input type="text" class="wanted-name" value="${data?.name || ''}" placeholder="Имя Фамилия"></div>
-                <div class="field"><label>Паспорт</label><input type="text" class="wanted-passport" value="${data?.passport || ''}" placeholder="серия номер"></div>
-                <div class="field"><label>Статьи обвинения</label><input type="text" class="wanted-articles" value="${data?.articles || ''}" placeholder="ст. 105, ст. 158"></div>
-                <div class="field"><label>Вид заключения</label><select class="wanted-verdict">${verdictOptions.map(t => `<option value="${t}" ${data?.verdict === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-                <div class="field"><label>Срок</label><input type="number" class="wanted-term" value="${data?.term || ''}" placeholder="срок" min="1" style="max-width:120px;"><span class="wanted-term-label" style="color:var(--text-muted); font-size:0.9rem;">${data?.verdict === 'УК СА' ? 'год(а/лет)' : 'месяц(ев/а)'}</span></div>
+                <div class="field">
+                    <label>Имя Фамилия</label>
+                    <input type="text" class="wanted-name" value="${data?.name || ''}" placeholder="Имя Фамилия">
+                </div>
+                <div class="field">
+                    <label>Паспорт</label>
+                    <input type="text" class="wanted-passport" value="${data?.passport || ''}" placeholder="серия номер">
+                </div>
+                <div class="field">
+                    <label>Статьи обвинения</label>
+                    <input type="text" class="wanted-articles" value="${data?.articles || ''}" placeholder="ст. 105, ст. 158">
+                </div>
+                <div class="field">
+                    <label>Вид заключения</label>
+                    <select class="wanted-verdict">
+                        ${verdictOptions.map(t => `<option value="${t}" ${data?.verdict === t ? 'selected' : ''}>${t}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Срок</label>
+                    <input type="number" class="wanted-term" value="${data?.term || ''}" placeholder="срок" min="1" style="max-width:120px;">
+                    <span class="wanted-term-label" style="color:var(--text-muted); font-size:0.9rem;">${data?.verdict === 'УК СА' ? 'год(а/лет)' : 'месяц(ев/а)'}</span>
+                </div>
             </div>
         `;
 
@@ -941,7 +997,7 @@
     }
 
     // ============================================================
-    // ФАКТЫ (Итоговое)
+    // ФАКТЫ (Итоговое) — с действиями
     // ============================================================
     
     function createFinalElement(data) {
@@ -962,17 +1018,27 @@
                 <span class="drag-handle">⠿</span>
                 <span class="num">${String(state.finalCounter + 1).padStart(2, '0')}</span>
                 <span class="status-badge ${statusClass}">${statusText}</span>
-                <span class="info"><span class="fact-text">${actionName}</span></span>
+                <span class="info">
+                    <span class="fact-text">${actionName}</span>
+                </span>
                 <span class="expand-icon">▼</span>
                 <button class="del-btn" onclick="event.stopPropagation(); USMS.deleteFinal(this)">✕</button>
             </div>
             <div class="expanded-content">
                 <div class="header-row">
-                    <span class="title"><span class="num-big">#${String(state.finalCounter + 1).padStart(2, '0')}</span>Факт разбирательства</span>
+                    <span class="title">
+                        <span class="num-big">#${String(state.finalCounter + 1).padStart(2, '0')}</span>
+                        Факт разбирательства
+                    </span>
                     <span class="status-badge ${statusClass}" style="margin:0;">${statusText}</span>
                     <button class="collapse-btn" onclick="USMS.toggleFinal(this.closest('.final-item'))">▲ Свернуть</button>
                 </div>
-                <div class="field"><label>Действие</label><select class="final-action">${FINAL_ACTION_LIST.map(a => `<option value="${a.id}" ${actionId === a.id ? 'selected' : ''}>${a.name}</option>`).join('')}</select></div>
+                <div class="field">
+                    <label>Действие</label>
+                    <select class="final-action">
+                        ${FINAL_ACTION_LIST.map(a => `<option value="${a.id}" ${actionId === a.id ? 'selected' : ''}>${a.name}</option>`).join('')}
+                    </select>
+                </div>
                 <div class="field final-status-wrapper">
                     <label>Статус</label>
                     <select class="final-status">
@@ -985,16 +1051,16 @@
         `;
 
         const actionSelect = div.querySelector('.final-action');
+        const statusSelect = div.querySelector('.final-status');
         const statusWrapper = div.querySelector('.final-status-wrapper');
         const fieldsContainer = div.querySelector('.final-fields');
-        let statusSelect = div.querySelector('.final-status');
 
         function renderFields() {
             const action = actionSelect.value;
-            const st = statusSelect.value;
+            const status = statusSelect.value;
             const config = FINAL_FIELDS_CONFIG[action];
             if (!config) { fieldsContainer.innerHTML = ''; return; }
-            const fields = st === 'success' ? config.success : config.fail;
+            const fields = status === 'success' ? config.success : config.fail;
             fieldsContainer.innerHTML = renderFinalFields(fields, data);
             fieldsContainer.querySelectorAll('.final-field').forEach(el => {
                 el.addEventListener('input', () => { updateView(); scheduleRegenerate(); });
@@ -1004,9 +1070,9 @@
         }
 
         function updateView() {
-            const st = statusSelect.value;
-            const stText = st === 'success' ? 'Удалось' : 'Не удалось';
-            const stClass = st === 'success' ? 'status-badge--success' : 'status-badge--fail';
+            const status = statusSelect.value;
+            const stText = status === 'success' ? 'Удалось' : 'Не удалось';
+            const stClass = status === 'success' ? 'status-badge--success' : 'status-badge--fail';
             const actionName = FINAL_ACTION_LIST.find(a => a.id === actionSelect.value)?.name || '';
 
             div.querySelector('.compact-content .status-badge').textContent = stText;
@@ -1019,6 +1085,7 @@
         }
 
         actionSelect.addEventListener('change', () => {
+            // Пересобираем список статусов
             const action = actionSelect.value;
             const currentStatus = statusSelect.value;
             const failSupported = FINAL_SUPPORTS_FAIL[action];
@@ -1030,11 +1097,14 @@
                     ${failSupported ? `<option value="fail" ${currentStatus === 'fail' ? 'selected' : ''}>Не удалось</option>` : ''}
                 </select>
             `;
-            statusSelect = statusWrapper.querySelector('.final-status');
-            statusSelect.addEventListener('change', renderFields);
+            // Переподписываемся
+            const newStatusSelect = statusWrapper.querySelector('.final-status');
+            newStatusSelect.addEventListener('input', () => { renderFields(); });
+            newStatusSelect.addEventListener('change', () => { renderFields(); });
 
+            // Если выбран fail, а действие не поддерживает — переключаем на success
             if (currentStatus === 'fail' && !failSupported) {
-                statusSelect.value = 'success';
+                newStatusSelect.value = 'success';
             }
 
             renderFields();
@@ -1042,6 +1112,7 @@
         });
 
         statusSelect.addEventListener('change', renderFields);
+
         renderFields();
         return div;
     }
@@ -1084,105 +1155,6 @@
     }
 
     // ============================================================
-    // ШАБЛОНЫ DISCORD — рендер полей
-    // ============================================================
-    
-    function renderTplField(field) {
-        const val = state.tplValues[field.id] ?? (field.default || '');
-        switch (field.type) {
-            case 'select':
-                return `
-                    <div class="field">
-                        <label>${field.label}</label>
-                        <select id="${field.id}" class="tpl-field">
-                            ${(field.options || []).map(o => `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`).join('')}
-                        </select>
-                    </div>`;
-            case 'date':
-                return `
-                    <div class="field">
-                        <label>${field.label}</label>
-                        <input type="date" id="${field.id}" class="tpl-field" value="${val}">
-                    </div>`;
-            case 'time':
-                return `
-                    <div class="field">
-                        <label>${field.label}</label>
-                        <input type="time" id="${field.id}" class="tpl-field" value="${val}" step="60">
-                    </div>`;
-            default:
-                return `
-                    <div class="field">
-                        <label>${field.label}</label>
-                        <input type="text" id="${field.id}" class="tpl-field" value="${val}" placeholder="${field.placeholder || ''}">
-                    </div>`;
-        }
-    }
-
-    function renderTemplatesSection() {
-        const container = DOM.tplFieldsContainer;
-        if (!container) return;
-
-        const type = $('tplType')?.value || 'subpoena';
-        const config = TPL_FIELDS_CONFIG[type];
-        if (!config) return;
-
-        let html = `<div class="card__title">${config.title}</div>`;
-
-        // Базовые поля
-        config.fields.forEach(f => {
-            html += renderTplField(f);
-        });
-
-        // Тумблеры (если есть)
-        if (config.toggles && config.toggles.length) {
-            config.toggles.forEach(tg => {
-                const toggleVal = state.tplValues[tg.id] || false;
-                html += `
-                    <div class="tpl-toggle-wrapper">
-                        <div class="tpl-toggle">
-                            <input type="checkbox" id="${tg.id}" class="tpl-toggle-check" ${toggleVal ? 'checked' : ''}>
-                            <label for="${tg.id}">${tg.label}</label>
-                        </div>
-                        <div class="tpl-toggle-fields" id="${tg.id}Fields" style="display: ${toggleVal ? 'block' : 'none'};">
-                            ${tg.fields.map(f => renderTplField(f)).join('')}
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        container.innerHTML = html;
-
-        // Привязываем обработчики
-        container.querySelectorAll('.tpl-field').forEach(el => {
-            el.addEventListener('input', () => {
-                state.tplValues[el.id] = el.value;
-                scheduleRegenerate();
-                saveSettings();
-            });
-            el.addEventListener('change', () => {
-                state.tplValues[el.id] = el.value;
-                scheduleRegenerate();
-                saveSettings();
-            });
-        });
-
-        // Обработчики тумблеров
-        container.querySelectorAll('.tpl-toggle-check').forEach(cb => {
-            cb.addEventListener('change', () => {
-                state.tplValues[cb.id] = cb.checked;
-                const fieldsDiv = document.getElementById(cb.id + 'Fields');
-                if (fieldsDiv) {
-                    fieldsDiv.style.display = cb.checked ? 'block' : 'none';
-                }
-                scheduleRegenerate();
-                saveSettings();
-            });
-        });
-    }
-
-    // ============================================================
     // СБОР ДАННЫХ
     // ============================================================
     
@@ -1204,12 +1176,14 @@
             if (tt) extra.time_to = tt.value;
             const sup = item.querySelector('.obligation-supervisor');
             if (sup) extra.supervisor = sup.value;
+            
             const idate = item.querySelector('.obligation-interrogation-date');
             if (idate) extra.interrogation_date = idate.value;
             const itf = item.querySelector('.obligation-interrogation-time-from');
             if (itf) extra.interrogation_time_from = itf.value;
             const itt = item.querySelector('.obligation-interrogation-time-to');
             if (itt) extra.interrogation_time_to = itt.value;
+            
             result.push({ type, name, passport, ...extra });
         });
         return result;
@@ -1255,7 +1229,10 @@
             const index = i + 1;
             const template = TYPE_TEMPLATES[ob.type] || '{index}. {name}';
             const role = ob.faction === 'Гражданин' ? 'гражданина' : 'сотрудника';
-            const data = { index, type: ob.type || 'Запрос', name: ob.name || '—', passport: ob.passport || '—', role };
+            const data = {
+                index, type: ob.type || 'Запрос', name: ob.name || '—',
+                passport: ob.passport || '—', role
+            };
             if (ob.type === 'Уведомление' || ob.type === 'Запрет на увольнение') {
                 data.faction = ob.faction || '—';
             } else if (ob.type === 'Отстранение') {
@@ -1298,11 +1275,14 @@
             const index = i + 1;
             const tmpl = FINAL_TEMPLATES[f.actionId]?.[f.status];
             if (!tmpl) return '';
+
+            // Готовим данные для подстановки
             const fields = f.fields || {};
             let role = 'сотрудника';
             if (f.actionId === 'interrogation' && fields.faction === 'Гражданин') {
                 role = 'гражданина';
             }
+
             const data = {
                 faction: fields.faction || '—',
                 name: fields.name || '—',
@@ -1315,125 +1295,10 @@
                 reason: fields.reason || '—',
                 role: role
             };
+
             const text = tmpl.replace(/\{(\w+)\}/g, (_, key) => data[key] ?? `{${key}}`);
             return `[COLOR=rgb(41, 105, 176)][B]${index}. [/B][/COLOR]${text}`;
         }).filter(Boolean).join('\n\n');
-    }
-
-    // ============================================================
-    // РЕНДЕР DISCORD-ШАБЛОНОВ
-    // ============================================================
-    
-    function getTplValue(id, fallback = '—') {
-        const v = state.tplValues[id];
-        if (v === undefined || v === null || v === '') return fallback;
-        return v;
-    }
-
-    function renderDiscordTemplates() {
-        const type = $('tplType')?.value || 'subpoena';
-        const prosecutorPosition = $('prosecutorPosition').value || '—';
-        const prosecutorName = $('prosecutorName').value || '—';
-
-        if (type === 'subpoena') {
-            const tpl = `## ${getTplValue('tplGreeting', 'Добрый Вечер')}, ${getTplValue('tplDefendantName')}!
-
-Я являюсь **${prosecutorPosition} ${prosecutorName}**. Мой номер жетона: **USMS-${getTplValue('tplBadgeNumber')}**
-
-Вам направляется официальная повестка в суд по **[исковому делу №${getTplValue('tplCaseId')}](${getTplValue('tplCaseUrl', '#')})**, где вы являетесь ***ответчиком***. Заседание назначено ведущим судьей на **${formatDate(getTplValue('tplCourtDate', ''))}** в **${getTplValue('tplCourtTime')}** в *${getTplValue('tplCourtLocation')}*.
-
-\`Если потребуется дополнительная информация или разъяснения, пожалуйста, свяжитесь со мной.\`
-
-**С уважением,
-${prosecutorPosition}
-${prosecutorName}
-**`;
-            return tpl;
-        }
-
-        if (type === 'interrogation') {
-            return `${getTplValue('tplGreeting', 'Добрый день')}, ${getTplValue('tplDefendantName')}! Меня зовут ${prosecutorName}, я являюсь ${prosecutorPosition} USMS. Моё удостоверение USMS-[${getTplValue('tplBadgeNumber')}].
-
-Уведомляю Вас на основании постановления MSLR‑№${getTplValue('tplOrderNumber')} о необходимости явки для проведения допроса.
-
-Место проведения: ${getTplValue('tplPlace', 'Капитолий')}.
-Период явки: ${formatDate(getTplValue('tplCourtDate', ''))} 
-Временной интервал: с ${getTplValue('tplTimeFrom')} до ${getTplValue('tplTimeTo')}.
-
-Для согласования точного времени встречи прошу направить официальное письмо на электронную почту сотрудника USMS.
-
-С уважением,
-${prosecutorPosition} USMS
-${prosecutorName}
-`;
-        }
-
-        if (type === 'investigation') {
-            let text = `${getTplValue('tplGreeting', 'Добрый день')}! Меня зовут ${prosecutorName}, я являюсь ${prosecutorPosition} USMS. Моё удостоверение USMS-[${getTplValue('tplBadgeNumber')}].
-
-Уведомляю, о начатом в отношение Вас досудебном разбирательстве. Иск №${getTplValue('tplCaseId')} ОС.`;
-
-            // Тумблер боди-камеры
-            if (state.tplValues.tplToggleBodycam) {
-                text += ` На основании ПОСТАНОВЛЕНИЕ MSLR-№${getTplValue('tplOrderNumber')} предоставить записи с боди-камеры за ${formatDate(getTplValue('tplCourtDate', ''))} с ${getTplValue('tplTimeFrom')} по ${getTplValue('tplTimeTo')} и направить её на электронную почту.`;
-            }
-
-            // Тумблер запрета
-            if (state.tplValues.tplToggleBan) {
-                text += ` Так же уведомляю Вас о запрете на увольнение сроком 72 часа.`;
-            }
-
-            text += `
-
-Если потребуется дополнительная информация или разъяснения, пожалуйста, свяжитесь со мной.
-
-С уважением,
-${prosecutorName}
-${prosecutorPosition} USMS
-`;
-            return text;
-        }
-
-        if (type === 'fine') {
-            return `${getTplValue('tplGreeting', 'Добрый день')}, ${getTplValue('tplDefendantName')}. Меня зовут ${prosecutorName}, я являюсь ${prosecutorPosition} USMS. Моё удостоверение USMS-[${getTplValue('tplBadgeNumber')}].
-
-Настоящим информирую вас о необходимости срочной оплаты штрафов, наложенных по постановлению ${getTplValue('tplCourtType', 'Окружного')} суда по иску №${getTplValue('tplCaseId')}. В соответствии с решением, вам необходимо выплатить следующие суммы:
-
-Штраф по статье ${getTplValue('tplArticle')} ${getTplValue('tplCodeType', 'АК СА')}: ${getTplValue('tplAmount')} долларов США
-
-Сумма должна быть оплачена в течение 72 часов с момента публикации данного постановления.
-
-Просим отнестись к данному уведомлению с необходимой степенью серьезности и выполнить оплату в указанный срок, чтобы избежать дальнейших мер.
-
-С уважением,
-${prosecutorName}
-${prosecutorPosition} USMS
-`;
-        }
-
-        if (type === 'ignored') {
-            return `${getTplValue('tplGreeting', 'Добрый день')}. Меня зовут ${prosecutorName}, я являюсь ${prosecutorPosition} USMS. Моё удостоверение USMS-[${getTplValue('tplBadgeNumber')}].
-
-Время на выполнение постановления истекло. Ваше полное игнорирование требования - считается невыполнением постановления.
-
-С уважением,
-${prosecutorName}
-${prosecutorPosition} USMS
-`;
-        }
-
-        if (type === 'response') {
-            return `${getTplValue('tplGreeting', 'Добрый день')}, ${getTplValue('tplDefendantName')}. Меня зовут ${prosecutorName}, я являюсь ${prosecutorPosition} USMS. Моё удостоверение USMS-[${getTplValue('tplBadgeNumber')}].
-
-Сообщаю Вам, что запрошенные Вами материалы находятся в открытом доступе в теле иска и доступны для ознакомления. Дополнительных сведений от истца не поступало. 
-
-С уважением,
-${prosecutorName}
-${prosecutorPosition} USMS
-`;
-        }
-
-        return '';
     }
 
     // ============================================================
@@ -1485,8 +1350,6 @@ ${prosecutorPosition} USMS
             };
             result = result.replace(/\{(\w+)\}/g, (_, key) => data[key] ?? `{${key}}`);
             result = result.replace(/\{finalFacts\}/g, renderFinal(collectFinal()));
-        } else if (state.currentTab === 'templates') {
-            result = renderDiscordTemplates();
         } else {
             result = DEFAULT_TEMPLATE;
             const data = {
@@ -1522,7 +1385,7 @@ ${prosecutorPosition} USMS
                 btn.classList.add('tabs__btn--active');
                 state.currentTab = btn.dataset.tab;
 
-                const sections = { decree: 'decreeSection', wanted: 'wantedSection', final: 'finalSection', templates: 'templatesSection' };
+                const sections = { decree: 'decreeSection', wanted: 'wantedSection', final: 'finalSection' };
                 Object.entries(sections).forEach(([key, id]) => {
                     $(id).style.display = key === state.currentTab ? 'flex' : 'none';
                 });
@@ -1539,13 +1402,6 @@ ${prosecutorPosition} USMS
                 regenerate();
                 saveSettings();
             });
-        });
-
-        // Смена типа шаблона
-        $('tplType').addEventListener('change', () => {
-            renderTemplatesSection();
-            scheduleRegenerate();
-            saveSettings();
         });
     }
 
@@ -1590,11 +1446,8 @@ ${prosecutorPosition} USMS
 
         $('resetTemplateBtn').addEventListener('click', () => {
             playSound('reset');
-            state.tplValues = {};
-            STORAGE_FIELDS.forEach(id => {
-                const el = $(id);
-                if (el && el.tagName === 'INPUT' && el.type !== 'checkbox') el.value = '';
-            });
+            ['orderNumber', 'judgeName', 'caseId', 'citizenName',
+             'wantedOrderNumber', 'wantedJudgeName', 'wantedCaseId'].forEach(id => { $(id).value = ''; });
             $('judgeRank').value = 'окружного судьи';
             $('courtType').value = 'окружной';
             $('wantedJudgeRank').value = 'окружного судьи';
@@ -1608,7 +1461,6 @@ ${prosecutorPosition} USMS
             DOM.actionsCount.textContent = '0';
             DOM.wantedCount.textContent = '0';
             DOM.finalCount.textContent = '0';
-            renderTemplatesSection();
             saveSettingsNow();
             regenerate();
             updateProgress();
@@ -1617,7 +1469,6 @@ ${prosecutorPosition} USMS
 
         $('saveSettingsBtn').addEventListener('click', () => {
             playSound('save');
-            saveTplValues();
             saveSettingsNow();
             regenerate();
             closeModal($('settingsModal'));
@@ -1713,7 +1564,6 @@ ${prosecutorPosition} USMS
         initDragDrop(DOM.wantedContainer);
         initDragDrop(DOM.finalContainer);
 
-        renderTemplatesSection();
         regenerate();
         updateProgress();
         validateAll();
@@ -1729,9 +1579,15 @@ ${prosecutorPosition} USMS
     }
 
     window.USMS = {
-        toggleObligation, toggleWanted, toggleFinal,
-        deleteObligation, deleteWanted, deleteFinal,
-        renumberObligations, renumberWanted, renumberFinal
+        toggleObligation,
+        toggleWanted,
+        toggleFinal,
+        deleteObligation,
+        deleteWanted,
+        deleteFinal,
+        renumberObligations,
+        renumberWanted,
+        renumberFinal
     };
 
     init();
