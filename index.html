@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USMS · Генератор постановлений v3.3</title>
+    <title>USMS · Генератор постановлений v3.4</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -30,7 +30,7 @@
         <!-- ===== TOP BAR ===== -->
         <header class="app-header">
             <div class="app-header__title">
-                <h1>⚖️ United States Marshals Service <span>Генератор v3.3</span></h1>
+                <h1>⚖️ United States Marshals Service <span>Генератор v3.4</span></h1>
                 <p class="app-header__subhead">Разработано Dante DeRosse · .dantezzz.</p>
             </div>
             <div class="app-header__actions">
@@ -189,51 +189,14 @@
 
                 <!-- ===== ИТОГОВОЕ ===== -->
                 <section id="finalSection" class="tab-content" style="display: none;">
-                    <div class="card">
-                        <div class="card__title">📋 Финальная проверка</div>
-                        <div class="checklist" id="finalChecklist">
-                            <div class="checklist__item">
-                                <span class="checklist__icon" id="finalDecreeCheck">⬜</span>
-                                <span>Постановление заполнено</span>
-                            </div>
-                            <div class="checklist__item">
-                                <span class="checklist__icon" id="finalWantedCheck">⬜</span>
-                                <span>Розыск заполнен</span>
-                            </div>
-                            <div class="checklist__item">
-                                <span class="checklist__icon" id="finalActionsCheck">⬜</span>
-                                <span>Добавлено действие</span>
-                            </div>
-                            <div class="checklist__item">
-                                <span class="checklist__icon" id="finalWantedListCheck">⬜</span>
-                                <span>Добавлен разыскиваемый</span>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="card card--grow">
-                        <div class="card__title">📊 Статус готовности</div>
-                        <div class="stats">
-                            <div class="stats__row">
-                                <span>Общий прогресс</span>
-                                <span class="stats__pct" id="finalProgressPct">0%</span>
-                            </div>
-                            <div class="progress__track">
-                                <div class="progress__fill" id="finalProgressFill"></div>
-                            </div>
-                            <div class="stats__badges">
-                                <div class="stats__badge">
-                                    <span class="dot dot--green"></span>
-                                    <span id="finalValidCount">0</span>
-                                    <span class="stats__sep">/</span>
-                                    <span id="finalTotalCount">0</span>
-                                </div>
-                                <div class="stats__badge">
-                                    <span class="dot dot--red"></span>
-                                    <span id="finalInvalidCount">0</span>
-                                </div>
-                            </div>
+                        <div class="card__title">
+                            📋 Факты разбирательства
+                            <span class="count" id="finalCount">0</span>
+                            <span class="badge badge--partial" id="finalFactsValidation">⏳ Требуется</span>
                         </div>
+                        <div id="finalContainer" class="sortable"></div>
+                        <button class="btn btn--primary btn--block" id="addFinalBtn">➕ Добавить факт</button>
                     </div>
                 </section>
             </div>
@@ -241,7 +204,7 @@
             <div class="layout__right">
                 <div class="card card--grow card--output">
                     <div class="card__title">📄 Результат (BBCode)</div>
-                    <pre class="output" id="outputDisplay">Здесь будет сгенерированное постановление...</pre>
+                    <pre class="output" id="outputDisplay">Здесь будет сгенерированный документ...</pre>
                 </div>
 
                 <div class="control-panel">
@@ -299,7 +262,7 @@
                 <ul>
                     <li>Заполните <b>Основные данные</b></li>
                     <li>Добавляйте <b>Действия</b> кнопкой ➕</li>
-                    <li>Типы действий: Уведомление, Боди-Камера, Запрет, Отстранение, <b>Допрос</b></li>
+                    <li>Типы: Уведомление, Боди-Камера, Запрет, Отстранение, Допрос</li>
                     <li>Перетаскивайте действия для смены порядка</li>
                 </ul>
                 <h3>🔍 Розыск</h3>
@@ -309,7 +272,9 @@
                 </ul>
                 <h3>📋 Итоговое</h3>
                 <ul>
-                    <li>Проверьте статус заполнения</li>
+                    <li>Добавляйте <b>факты</b> разбирательства</li>
+                    <li>Для каждого факта выбирайте: <b>Удалось</b> или <b>Не удалось</b></li>
+                    <li>Факты автоматически нумеруются</li>
                 </ul>
             </div>
         </div>
