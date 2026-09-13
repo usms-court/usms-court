@@ -1,5 +1,5 @@
 /* ============================================================
-   USMS GENERATOR — SCRIPT v3.3
+   USMS GENERATOR — SCRIPT v3.4
    ============================================================ */
 
 (function () {
@@ -70,6 +70,32 @@
 [/TABLE]
 `;
 
+    // ФИНАЛЬНЫЙ ШАБЛОН (Итоговое)
+    const FINAL_TEMPLATE = `
+[TABLE width="100%"]
+[TR]
+[td][IMG width="886px" alt="USMS.png"]https://imgur.com/F9gO8NW.png[/IMG]
+
+
+[CENTER][IMG width="886px" alt="USMS.png"]https://imgur.com/3HqLU38.png[/IMG]
+
+[COLOR=rgb(41, 105, 176)][SIZE=6][B]Постановление Службы Маршалов[/B][/SIZE][/COLOR]
+[IMG width="886px" alt="USMS.png"]https://imgur.com/cnQclp4.png[/IMG]
+[B]Службой Маршалов было инициировано досудебное разбирательство, в ходе которого были выяснены следующие факты:[/B]
+[/CENTER]
+{finalFacts}
+[CENTER][IMG width="886px" alt="USMS.png"]https://imgur.com/AeiYwmY.png[/IMG][/CENTER]
+[RIGHT]
+[B][COLOR=rgb(255, 255, 255)]{prosecutorPosition}
+{prosecutorName}[/COLOR][/B]
+[COLOR=rgb(255, 255, 255)][B]Дата: {currentDate}[/B][/COLOR]
+[B][COLOR=rgb(255, 255, 255)]Подпись:[/COLOR]
+{prosecutorSignatureFormatted}[/B]
+[/RIGHT][/td]
+[/TR]
+[/TABLE]
+`;
+
     const TYPE_TEMPLATES = {
         'Уведомление': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Уведомляю {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] о начатом досудебном разбирательстве.[/B]',
         'Боди-Камера': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Требую {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}], предоставить записи с боди-камеры за [COLOR=rgb(184, 49, 47)]{date_only}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR].[/B]',
@@ -77,6 +103,26 @@
         'Отстранение': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Обязать [COLOR=rgb(41, 105, 176)]{supervisor_rank}[/COLOR] [COLOR=rgb(184, 49, 47)]{supervisor_name}[/COLOR] отстранить {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] и [COLOR=rgb(184, 49, 47)]понизить[/COLOR] его на первый порядковый ранг.[/B]',
         'Допрос': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Провести допрос {role} [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] в [COLOR=rgb(41, 105, 176)]{interrogationDate}[/COLOR] с [COLOR=rgb(184, 49, 47)]{interrogationTimeStart}[/COLOR] по [COLOR=rgb(184, 49, 47)]{interrogationTimeEnd}[/COLOR].[/B]'
     };
+
+    // Типы фактов для Итогового
+    const FINAL_FACT_TYPES = [
+        'Установить факт нарушения',
+        'Провести расследование',
+        'Собрать доказательства',
+        'Опросить свидетелей',
+        'Проверить документы',
+        'Установить личность',
+        'Провести экспертизу',
+        'Найти пострадавших',
+        'Подтвердить алиби',
+        'Установить мотив',
+        'Проверить показания',
+        'Найти соучастников',
+        'Изъять улики',
+        'Составить протокол',
+        'Направить запрос',
+        'Другое'
+    ];
 
     const SUPERVISOR_RANKS = {
         'LSPD': 'Шефа', 'LSSD': 'Шерифа', 'SANG': 'Генерала',
@@ -98,8 +144,10 @@
             progressPct: document.getElementById('progressPct'),
             actionsCount: document.getElementById('actionsCount'),
             wantedCount: document.getElementById('wantedCount'),
+            finalCount: document.getElementById('finalCount'),
             obligationsContainer: document.getElementById('obligationsContainer'),
             wantedContainer: document.getElementById('wantedContainer'),
+            finalContainer: document.getElementById('finalContainer'),
             appContainer: document.getElementById('appContainer')
         };
     }
@@ -114,7 +162,8 @@
     const state = {
         currentTab: 'decree',
         obligationCounter: 0,
-        wantedCounter: 0
+        wantedCounter: 0,
+        finalCounter: 0
     };
 
     // ============================================================
@@ -129,7 +178,7 @@
         const day = String(moscowTime.getDate()).padStart(2, '0');
         const month = String(moscowTime.getMonth() + 1).padStart(2, '0');
         const year = moscowTime.getFullYear();
-        return `${day}.${month}.${year}`;
+        return `${day}/${month}/${year}`;
     }
 
     function declineTerm(number, word) {
@@ -304,12 +353,23 @@
         return valid;
     }
 
+    function validateFinalFacts() {
+        const items = DOM.finalContainer.querySelectorAll('.final-item');
+        const badge = $('finalFactsValidation');
+        const valid = items.length > 0;
+        if (badge) {
+            badge.textContent = valid ? '✅ Добавлено' : '⚠️ Требуется';
+            badge.className = 'badge ' + (valid ? 'badge--valid' : 'badge--partial');
+        }
+        return valid;
+    }
+
     function validateAll() {
         validateSection($('decreeMainSection'), 'decreeMainValidation');
         validateActions();
         validateSection($('wantedSection'), 'wantedInfoValidation');
         validateWantedList();
-        updateFinalChecklist();
+        validateFinalFacts();
     }
 
     // ============================================================
@@ -341,53 +401,14 @@
             if (wanted.length > 0) filled++;
             total++;
         } else {
-            const checks = $$('#finalChecklist [id$="Check"]');
-            checks.forEach(el => {
-                if (el.textContent === '✅') filled++;
-                total++;
-            });
+            const facts = DOM.finalContainer.querySelectorAll('.final-item');
+            if (facts.length > 0) filled++;
+            total++;
         }
 
         const pct = total > 0 ? Math.min(Math.round((filled / total) * 100), 100) : 0;
         DOM.progressFill.style.width = pct + '%';
         DOM.progressPct.textContent = pct + '%';
-    }
-
-    function updateFinalChecklist() {
-        const decreeValid = validateSection($('decreeMainSection'), 'decreeMainValidation');
-        const wantedInfoValid = validateSection($('wantedSection'), 'wantedInfoValidation');
-        const actionsValid = validateActions();
-        const wantedListValid = validateWantedList();
-
-        const checks = [
-            ['finalDecreeCheck', decreeValid],
-            ['finalWantedCheck', wantedInfoValid],
-            ['finalActionsCheck', actionsValid],
-            ['finalWantedListCheck', wantedListValid]
-        ];
-
-        let validCount = 0;
-        checks.forEach(([id, valid]) => {
-            const el = $(id);
-            if (el) {
-                el.textContent = valid ? '✅' : '⬜';
-                if (valid) validCount++;
-            }
-        });
-
-        const total = checks.length;
-        const pct = Math.round((validCount / total) * 100);
-
-        const fp = $('finalProgressFill');
-        if (fp) fp.style.width = pct + '%';
-        const fpp = $('finalProgressPct');
-        if (fpp) fpp.textContent = pct + '%';
-        const fvc = $('finalValidCount');
-        if (fvc) fvc.textContent = validCount;
-        const ftc = $('finalTotalCount');
-        if (ftc) ftc.textContent = total;
-        const fic = $('finalInvalidCount');
-        if (fic) fic.textContent = total - validCount;
     }
 
     // ============================================================
@@ -399,7 +420,7 @@
         let draggedItem = null;
 
         container.addEventListener('dragstart', e => {
-            const item = e.target.closest('.obligation-item, .wanted-item');
+            const item = e.target.closest('.obligation-item, .wanted-item, .final-item');
             if (!item) return;
             draggedItem = item;
             item.classList.add('dragging');
@@ -408,14 +429,14 @@
         });
 
         container.addEventListener('dragend', e => {
-            const item = e.target.closest('.obligation-item, .wanted-item');
+            const item = e.target.closest('.obligation-item, .wanted-item, .final-item');
             if (item) item.classList.remove('dragging');
             container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
         });
 
         container.addEventListener('dragover', e => {
             e.preventDefault();
-            const item = e.target.closest('.obligation-item, .wanted-item');
+            const item = e.target.closest('.obligation-item, .wanted-item, .final-item');
             if (item && item !== draggedItem) {
                 container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
                 item.classList.add('drag-over');
@@ -423,13 +444,13 @@
         });
 
         container.addEventListener('dragleave', e => {
-            const item = e.target.closest('.obligation-item, .wanted-item');
+            const item = e.target.closest('.obligation-item, .wanted-item, .final-item');
             if (item) item.classList.remove('drag-over');
         });
 
         container.addEventListener('drop', e => {
             e.preventDefault();
-            const item = e.target.closest('.obligation-item, .wanted-item');
+            const item = e.target.closest('.obligation-item, .wanted-item, .final-item');
             if (!item || !draggedItem || item === draggedItem) {
                 container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
                 return;
@@ -439,17 +460,18 @@
             const toIdx = items.indexOf(item);
             if (fromIdx < toIdx) container.insertBefore(draggedItem, item.nextSibling);
             else container.insertBefore(draggedItem, item);
-            
+
             if (container.id === 'obligationsContainer') renumberObligations();
-            else renumberWanted();
-            
+            else if (container.id === 'wantedContainer') renumberWanted();
+            else if (container.id === 'finalContainer') renumberFinal();
+
             container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
             draggedItem = null;
         });
     }
 
     // ============================================================
-    // ДЕЙСТВИЯ
+    // ДЕЙСТВИЯ (Постановление)
     // ============================================================
     
     function getSupervisorRank(faction) {
@@ -786,11 +808,132 @@
     }
 
     // ============================================================
+    // ФАКТЫ (Итоговое)
+    // ============================================================
+    
+    function createFinalElement(data) {
+        const div = document.createElement('div');
+        div.className = 'final-item obligation-item collapsed';
+        div.draggable = true;
+        const itemId = 'final_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+        div.dataset.id = itemId;
+
+        const status = data?.status || 'success';
+        const statusText = status === 'success' ? 'Удалось' : 'Не удалось';
+        const statusClass = status === 'success' ? 'status-badge--success' : 'status-badge--fail';
+
+        div.innerHTML = `
+            <div class="compact-content" onclick="USMS.toggleFinal(this.closest('.final-item'))">
+                <span class="drag-handle">⠿</span>
+                <span class="num">${String(state.finalCounter + 1).padStart(2, '0')}</span>
+                <span class="status-badge ${statusClass}">${statusText}</span>
+                <span class="info">
+                    <span class="fact-text">${data?.fact || 'Новый факт'}</span>
+                </span>
+                <span class="expand-icon">▼</span>
+                <button class="del-btn" onclick="event.stopPropagation(); USMS.deleteFinal(this)">✕</button>
+            </div>
+            <div class="expanded-content">
+                <div class="header-row">
+                    <span class="title">
+                        <span class="num-big">#${String(state.finalCounter + 1).padStart(2, '0')}</span>
+                        Факт разбирательства
+                    </span>
+                    <span class="status-badge ${statusClass}" style="margin:0;">${statusText}</span>
+                    <button class="collapse-btn" onclick="USMS.toggleFinal(this.closest('.final-item'))">▲ Свернуть</button>
+                </div>
+                <div class="field">
+                    <label>Статус</label>
+                    <select class="final-status">
+                        <option value="success" ${status === 'success' ? 'selected' : ''}>Удалось</option>
+                        <option value="fail" ${status === 'fail' ? 'selected' : ''}>Не удалось</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Факт</label>
+                    <select class="final-fact-select">
+                        ${FINAL_FACT_TYPES.map(t => `<option value="${t}" ${data?.fact === t ? 'selected' : ''}>${t}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Свой текст (если «Другое»)</label>
+                    <input type="text" class="final-fact-custom" value="${data?.customFact || ''}" placeholder="Введите свой вариант...">
+                </div>
+            </div>
+        `;
+
+        const statusSelect = div.querySelector('.final-status');
+        const factSelect = div.querySelector('.final-fact-select');
+        const factCustom = div.querySelector('.final-fact-custom');
+
+        function updateView() {
+            const st = statusSelect.value;
+            const stText = st === 'success' ? 'Удалось' : 'Не удалось';
+            const stClass = st === 'success' ? 'status-badge--success' : 'status-badge--fail';
+            
+            const factValue = factSelect.value === 'Другое' ? (factCustom.value || 'Новый факт') : factSelect.value;
+            
+            div.querySelector('.compact-content .status-badge').textContent = stText;
+            div.querySelector('.compact-content .status-badge').className = 'status-badge ' + stClass;
+            div.querySelector('.compact-content .fact-text').textContent = factValue;
+            
+            const eb = div.querySelector('.expanded-content .header-row .status-badge');
+            eb.textContent = stText;
+            eb.className = 'status-badge ' + stClass;
+        }
+
+        [statusSelect, factSelect, factCustom].forEach(el => {
+            el.addEventListener('input', () => { updateView(); scheduleRegenerate(); });
+            el.addEventListener('change', () => { updateView(); scheduleRegenerate(); });
+        });
+
+        updateView();
+        return div;
+    }
+
+    function addFinal(data) {
+        const el = createFinalElement(data || null);
+        DOM.finalContainer.appendChild(el);
+        state.finalCounter = DOM.finalContainer.querySelectorAll('.final-item').length;
+        DOM.finalCount.textContent = state.finalCounter;
+        scheduleRegenerate();
+        updateProgress();
+        saveSettings();
+        validateAll();
+    }
+
+    function deleteFinal(btn) {
+        playSound('delete');
+        btn.closest('.final-item').remove();
+        renumberFinal();
+    }
+
+    function toggleFinal(el) {
+        if (!el) return;
+        el.classList.toggle('collapsed');
+        playSound('toggle');
+    }
+
+    function renumberFinal() {
+        const items = DOM.finalContainer.querySelectorAll('.final-item');
+        items.forEach((item, i) => {
+            item.querySelector('.compact-content .num').textContent = String(i + 1).padStart(2, '0');
+            item.querySelector('.expanded-content .num-big').textContent = `#${String(i + 1).padStart(2, '0')}`;
+        });
+        state.finalCounter = items.length;
+        DOM.finalCount.textContent = items.length;
+        scheduleRegenerate();
+        updateProgress();
+        saveSettings();
+        validateAll();
+    }
+
+    // ============================================================
     // СБОР ДАННЫХ
     // ============================================================
     
     function collectObligations() {
-        const items = DOM.obligationsContainer.querySelectorAll('.obligation-item');
+        const items = DOM.obligationsContainer.querySelectorAll('.obligation-item:not(.final-item)');
         const result = [];
         items.forEach(item => {
             const type = item.querySelector('.obligation-type')?.value || '';
@@ -808,7 +951,6 @@
             const sup = item.querySelector('.obligation-supervisor');
             if (sup) extra.supervisor = sup.value;
             
-            // Поля допроса
             const idate = item.querySelector('.obligation-interrogation-date');
             if (idate) extra.interrogation_date = idate.value;
             const itf = item.querySelector('.obligation-interrogation-time-from');
@@ -832,6 +974,19 @@
                 verdict: item.querySelector('.wanted-verdict')?.value || 'УК СА',
                 term: item.querySelector('.wanted-term')?.value || ''
             });
+        });
+        return result;
+    }
+
+    function collectFinal() {
+        const items = DOM.finalContainer.querySelectorAll('.final-item');
+        const result = [];
+        items.forEach(item => {
+            const status = item.querySelector('.final-status')?.value || 'success';
+            const factSelect = item.querySelector('.final-fact-select')?.value || '';
+            const factCustom = item.querySelector('.final-fact-custom')?.value || '';
+            const fact = factSelect === 'Другое' ? (factCustom || 'Не указано') : factSelect;
+            result.push({ status, fact });
         });
         return result;
     }
@@ -885,6 +1040,15 @@
         }).join('\n\n');
     }
 
+    function renderFinal(list) {
+        if (!list.length) return '—';
+        return list.map((f, i) => {
+            const index = i + 1;
+            const statusText = f.status === 'success' ? 'Удалось' : 'Не удалось';
+            return `[COLOR=rgb(41, 105, 176)][B]${index}. [/B][/COLOR][COLOR=rgb(255, 255, 255)][B]${statusText}[/B][/COLOR]`;
+        }).join('\n');
+    }
+
     // ============================================================
     // ГЕНЕРАЦИЯ
     // ============================================================
@@ -924,6 +1088,16 @@
             };
             result = result.replace(/\{(\w+)\}/g, (_, key) => data[key] ?? `{${key}}`);
             result = result.replace(/\{wantedList\}/g, renderWanted(collectWanted()));
+        } else if (state.currentTab === 'final') {
+            result = FINAL_TEMPLATE;
+            const data = {
+                currentDate,
+                prosecutorPosition: $('prosecutorPosition').value || '—',
+                prosecutorName: $('prosecutorName').value || '—',
+                prosecutorSignatureFormatted: signatureFormatted
+            };
+            result = result.replace(/\{(\w+)\}/g, (_, key) => data[key] ?? `{${key}}`);
+            result = result.replace(/\{finalFacts\}/g, renderFinal(collectFinal()));
         } else {
             result = DEFAULT_TEMPLATE;
             const data = {
@@ -975,7 +1149,6 @@
                 updateProgress();
                 regenerate();
                 saveSettings();
-                if (state.currentTab === 'final') updateFinalChecklist();
             });
         });
     }
@@ -1017,6 +1190,7 @@
     function initEvents() {
         $('addObligationBtn').addEventListener('click', () => { playSound('add'); addObligation(null); });
         $('addWantedBtn').addEventListener('click', () => { playSound('add'); addWanted(null); });
+        $('addFinalBtn').addEventListener('click', () => { playSound('add'); addFinal(null); });
 
         $('resetTemplateBtn').addEventListener('click', () => {
             playSound('reset');
@@ -1028,10 +1202,13 @@
             $('wantedCourtType').value = 'окружного суда';
             DOM.obligationsContainer.innerHTML = '';
             DOM.wantedContainer.innerHTML = '';
+            DOM.finalContainer.innerHTML = '';
             state.obligationCounter = 0;
             state.wantedCounter = 0;
+            state.finalCounter = 0;
             DOM.actionsCount.textContent = '0';
             DOM.wantedCount.textContent = '0';
+            DOM.finalCount.textContent = '0';
             saveSettingsNow();
             regenerate();
             updateProgress();
@@ -1133,6 +1310,7 @@
         initEvents();
         initDragDrop(DOM.obligationsContainer);
         initDragDrop(DOM.wantedContainer);
+        initDragDrop(DOM.finalContainer);
 
         regenerate();
         updateProgress();
@@ -1141,18 +1319,23 @@
         setTimeout(() => {
             state.obligationCounter = DOM.obligationsContainer.querySelectorAll('.obligation-item').length;
             state.wantedCounter = DOM.wantedContainer.querySelectorAll('.wanted-item').length;
+            state.finalCounter = DOM.finalContainer.querySelectorAll('.final-item').length;
             DOM.actionsCount.textContent = state.obligationCounter;
             DOM.wantedCount.textContent = state.wantedCounter;
+            DOM.finalCount.textContent = state.finalCounter;
         }, 50);
     }
 
     window.USMS = {
         toggleObligation,
         toggleWanted,
+        toggleFinal,
         deleteObligation,
         deleteWanted,
+        deleteFinal,
         renumberObligations,
-        renumberWanted
+        renumberWanted,
+        renumberFinal
     };
 
     init();
