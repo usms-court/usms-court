@@ -286,7 +286,7 @@
         const day = String(moscowTime.getDate()).padStart(2, '0');
         const month = String(moscowTime.getMonth() + 1).padStart(2, '0');
         const year = moscowTime.getFullYear();
-        return `${day}/${month}/${year}`;
+        return `${day}.${month}.${year}`;
     }
 
     function declineTerm(number, word) {
@@ -303,12 +303,15 @@
         return word;
     }
 
-    function formatDate(dateStr) {
-        if (!dateStr) return '—';
-        const d = new Date(dateStr + 'T00:00:00');
-        if (isNaN(d.getTime())) return '—';
-        return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    }
+   function formatDate(dateStr) {
+       if (!dateStr) return '—';
+       const d = new Date(dateStr + 'T00:00:00');
+       if (isNaN(d.getTime())) return '—';
+       const day = String(d.getDate()).padStart(2, '0');
+       const month = String(d.getMonth() + 1).padStart(2, '0');
+       const year = d.getFullYear();
+       return `${day}.${month}.${year}`;
+   }
 
     // ============================================================
     // ЗВУКИ
