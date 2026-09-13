@@ -875,3 +875,49 @@ body {
 .final-item .compact-content .info .status-text--fail {
     color: var(--danger);
 }
+/* ========== ТУМБЛЕРЫ В ШАБЛОНАХ ========== */
+.tpl-toggle-wrapper {
+    background: rgba(11, 22, 34, 0.3);
+    border: 1px solid var(--border-light);
+    border-radius: var(--r-md);
+    padding: 14px 18px;
+    margin-bottom: 14px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.tpl-toggle-wrapper:hover {
+    background: rgba(11, 22, 34, 0.4);
+    border-color: var(--border);
+}
+
+.tpl-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 0;
+}
+.tpl-toggle input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #4a9eff;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.tpl-toggle label {
+    font-family: var(--font-accent);
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+    letter-spacing: 0.3px;
+}
+
+.tpl-toggle-fields {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+    animation: fadeIn 0.25s ease;
+}
+.tpl-toggle-fields .field:last-child {
+    margin-bottom: 0;
+}
