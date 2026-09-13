@@ -1021,7 +1021,7 @@
                 data.time_from = ob.time_from || '—';
                 data.time_to = ob.time_to || '—';
             } else if (ob.type === 'Допрос') {
-                data.faction = ob.faction || '—';
+                data.faction = ob.faction === 'Гражданин' ? '' : (ob.faction || '—');
                 data.interrogationDate = formatDate(ob.interrogation_date);
                 data.interrogationTimeStart = ob.interrogation_time_from || '—';
                 data.interrogationTimeEnd = ob.interrogation_time_to || '—';
