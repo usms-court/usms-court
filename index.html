@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USMS · Генератор постановлений v3.2</title>
+    <title>USMS · Генератор постановлений v3.3</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -17,7 +17,7 @@
         <div class="loader__text">Загрузка USMS</div>
     </div>
 
-    <!-- ===== ФОН (облегчённый — 3 строки) ===== -->
+    <!-- ===== ФОН ===== -->
     <div class="bg-text" aria-hidden="true">
         <div class="bg-text__line">USMS</div>
         <div class="bg-text__line">MARSHALS</div>
@@ -30,7 +30,7 @@
         <!-- ===== TOP BAR ===== -->
         <header class="app-header">
             <div class="app-header__title">
-                <h1>⚖️ United States Marshals Service <span>Генератор v3.2</span></h1>
+                <h1>⚖️ United States Marshals Service <span>Генератор v3.3</span></h1>
                 <p class="app-header__subhead">Разработано Dante DeRosse · .dantezzz.</p>
             </div>
             <div class="app-header__actions">
@@ -63,11 +63,6 @@
                 
                 <!-- ===== ПОСТАНОВЛЕНИЕ ===== -->
                 <section id="decreeSection" class="tab-content">
-                    <nav class="subtabs" id="decreeSubTabs">
-                        <button class="subtabs__btn subtabs__btn--active" data-sub="decree-main">📜 Постановление</button>
-                        <button class="subtabs__btn" data-sub="decree-interrogation">🎙️ Допрос</button>
-                    </nav>
-
                     <div id="decreeMainSection">
                         <div class="card">
                             <div class="card__title">
@@ -138,71 +133,6 @@
                             <button class="btn btn--primary btn--block" id="addObligationBtn">➕ Добавить действие</button>
                         </div>
                     </div>
-
-                    <div id="decreeInterrogationSection" style="display: none;">
-                        <div class="card">
-                            <div class="card__title">
-                                🎙️ Данные допроса
-                                <span class="badge badge--partial" id="interrogationValidation">⏳ Частично</span>
-                            </div>
-
-                            <div class="field">
-                                <label>Имя Фамилия судьи <span class="req">*</span></label>
-                                <input type="text" id="interrogationJudgeName" placeholder="Dante DeRosse" data-required="true">
-                                <div class="field__error" id="interrogationJudgeNameError">Обязательное поле</div>
-                            </div>
-                            <div class="field">
-                                <label>Должность судьи <span class="req">*</span></label>
-                                <select id="interrogationJudgeRank" data-required="true">
-                                    <option value="окружного судьи">Окружной судья</option>
-                                    <option value="председателя окружного суда">Председатель окружного суда</option>
-                                    <option value="верховного Судьи">Верховный судья</option>
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label>Тип суда <span class="req">*</span></label>
-                                <select id="interrogationCourtType" data-required="true">
-                                    <option value="окружной">Окружной</option>
-                                    <option value="кассационный">Кассационный</option>
-                                    <option value="апелляционный">Апелляционный</option>
-                                    <option value="верховный">Верховный</option>
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label>Номер искового заявления <span class="req">*</span></label>
-                                <input type="text" id="interrogationCaseId" placeholder="2600" data-required="true">
-                                <div class="field__error" id="interrogationCaseIdError">Обязательное поле</div>
-                            </div>
-
-                            <hr style="border:none; border-top:1px solid var(--accent-06); margin:16px 0;">
-
-                            <div class="field">
-                                <label>Имя допрашиваемого <span class="req">*</span></label>
-                                <input type="text" id="interrogationName" placeholder="Имя Фамилия" data-required="true">
-                                <div class="field__error" id="interrogationNameError">Обязательное поле</div>
-                            </div>
-                            <div class="field">
-                                <label>Паспорт <span class="req">*</span></label>
-                                <input type="text" id="interrogationPassport" placeholder="серия номер" data-required="true">
-                                <div class="field__error" id="interrogationPassportError">Обязательное поле</div>
-                            </div>
-                            <div class="field">
-                                <label>Дата допроса <span class="req">*</span></label>
-                                <input type="date" id="interrogationDate" data-required="true">
-                                <div class="field__error" id="interrogationDateError">Обязательное поле</div>
-                            </div>
-                            <div class="field-row">
-                                <div class="field">
-                                    <label>Время начала</label>
-                                    <input type="time" id="interrogationTimeStart">
-                                </div>
-                                <div class="field">
-                                    <label>Время окончания</label>
-                                    <input type="time" id="interrogationTimeEnd">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </section>
 
                 <!-- ===== РОЗЫСК ===== -->
@@ -265,10 +195,6 @@
                             <div class="checklist__item">
                                 <span class="checklist__icon" id="finalDecreeCheck">⬜</span>
                                 <span>Постановление заполнено</span>
-                            </div>
-                            <div class="checklist__item">
-                                <span class="checklist__icon" id="finalInterrogationCheck">⬜</span>
-                                <span>Допрос заполнен</span>
                             </div>
                             <div class="checklist__item">
                                 <span class="checklist__icon" id="finalWantedCheck">⬜</span>
@@ -373,12 +299,8 @@
                 <ul>
                     <li>Заполните <b>Основные данные</b></li>
                     <li>Добавляйте <b>Действия</b> кнопкой ➕</li>
+                    <li>Типы действий: Уведомление, Боди-Камера, Запрет, Отстранение, <b>Допрос</b></li>
                     <li>Перетаскивайте действия для смены порядка</li>
-                </ul>
-                <h3>🎙️ Допрос</h3>
-                <ul>
-                    <li>Заполните данные допрашиваемого</li>
-                    <li>Укажите дату и время</li>
                 </ul>
                 <h3>🔍 Розыск</h3>
                 <ul>
