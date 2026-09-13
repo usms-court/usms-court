@@ -1,5 +1,5 @@
 /* ============================================================
-   USMS GENERATOR — SCRIPT v3.4
+   USMS GENERATOR — SCRIPT v3.5
    ============================================================ */
 
 (function () {
@@ -32,7 +32,7 @@
 [COLOR=rgb(184, 49, 47)]4.[/COLOR] Постановление вступает в законную силу с момента публикации.
  
 [COLOR=rgb(184, 49, 47)]5.[/COLOR] Срок исполнения постановления установить равным 24 часам. [/B] [IMG width="886px" alt="USMS.png"]https://imgur.com/T0zf5dm.png[/IMG][/CENTER]
-[RIGHT][B]    Директор USMS
+[RIGHT][B]
 {prosecutorPosition} 
  Дата: {currentDate}[/B]
 {prosecutorName}
@@ -70,7 +70,6 @@
 [/TABLE]
 `;
 
-    // ФИНАЛЬНЫЙ ШАБЛОН (Итоговое)
     const FINAL_TEMPLATE = `
 [TABLE width="100%"]
 [TR]
@@ -104,7 +103,6 @@
         'Допрос': '[B][B][B]1. Обязать {role} [B][B][B][B][B][B][B][B][COLOR=rgb(41, 105, 176)][/COLOR]{faction}[/B][/B][/B][/B][/B][/B][/B][/B] [B][B][B][B][B][B][B][B][B][COLOR=rgb(184, 49, 47)]{name}[/COLOR][B] [№ Паспорта: {passport}][/B][/B][/B][/B][/B][/B][/B][/B][/B][/B] явиться в Капитолий {interrogationDate} в период с {interrogationTimeStart} до {interrogationTimeEnd} для прохождения допроса, перед этим согласовав удобное обеим сторонам время встречи официальным письмом на эл. почту сотрудника USMS.[/B][/B][/B]'
     };
 
-    // Типы фактов для Итогового
     const FINAL_FACT_TYPES = [
         'Установить факт нарушения',
         'Провести расследование',
@@ -332,7 +330,7 @@
     }
 
     function validateActions() {
-        const items = DOM.obligationsContainer.querySelectorAll('.obligation-item');
+        const items = DOM.obligationsContainer.querySelectorAll('.obligation-item:not(.final-item)');
         const badge = $('actionsValidation');
         const valid = items.length > 0;
         if (badge) {
@@ -388,7 +386,7 @@
             });
             if ($('factionSelect').value !== 'Гражданину') filled++;
 
-            const actions = DOM.obligationsContainer.querySelectorAll('.obligation-item');
+            const actions = DOM.obligationsContainer.querySelectorAll('.obligation-item:not(.final-item)');
             if (actions.length > 0) filled++;
             total++;
         } else if (state.currentTab === 'wanted') {
@@ -606,6 +604,12 @@
             } else if (type === 'Допрос') {
                 extraHtml = `
                     <div class="field">
+                        <label>Фракция</label>
+                        <select class="obligation-faction">
+                            ${factionOptions.map(f => `<option value="${f}" ${data?.faction === f ? 'selected' : ''}>${f}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="field">
                         <label>Дата допроса</label>
                         <input type="date" class="obligation-interrogation-date" value="${data?.interrogation_date || ''}">
                     </div>
@@ -644,7 +648,7 @@
     function addObligation(data) {
         const el = createObligationElement(data || null);
         DOM.obligationsContainer.appendChild(el);
-        state.obligationCounter = DOM.obligationsContainer.querySelectorAll('.obligation-item').length;
+        state.obligationCounter = DOM.obligationsContainer.querySelectorAll('.obligation-item:not(.final-item)').length;
         DOM.actionsCount.textContent = state.obligationCounter;
         scheduleRegenerate();
         updateProgress();
@@ -665,7 +669,7 @@
     }
 
     function renumberObligations() {
-        const items = DOM.obligationsContainer.querySelectorAll('.obligation-item');
+        const items = DOM.obligationsContainer.querySelectorAll('.obligation-item:not(.final-item)');
         items.forEach((item, i) => {
             item.querySelector('.compact-content .num').textContent = String(i + 1).padStart(2, '0');
             item.querySelector('.expanded-content .num-big').textContent = `#${String(i + 1).padStart(2, '0')}`;
@@ -1017,6 +1021,7 @@
                 data.time_from = ob.time_from || '—';
                 data.time_to = ob.time_to || '—';
             } else if (ob.type === 'Допрос') {
+                data.faction = ob.faction || '—';
                 data.interrogationDate = formatDate(ob.interrogation_date);
                 data.interrogationTimeStart = ob.interrogation_time_from || '—';
                 data.interrogationTimeEnd = ob.interrogation_time_to || '—';
@@ -1317,7 +1322,7 @@
         validateAll();
 
         setTimeout(() => {
-            state.obligationCounter = DOM.obligationsContainer.querySelectorAll('.obligation-item').length;
+            state.obligationCounter = DOM.obligationsContainer.querySelectorAll('.obligation-item:not(.final-item)').length;
             state.wantedCounter = DOM.wantedContainer.querySelectorAll('.wanted-item').length;
             state.finalCounter = DOM.finalContainer.querySelectorAll('.final-item').length;
             DOM.actionsCount.textContent = state.obligationCounter;
