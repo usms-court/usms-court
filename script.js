@@ -1,5 +1,5 @@
 /* ============================================================
-   USMS GENERATOR — OPTIMIZED SCRIPT v3.2
+   USMS GENERATOR — SCRIPT v3.3
    ============================================================ */
 
 (function () {
@@ -70,41 +70,12 @@
 [/TABLE]
 `;
 
-    const INTERROGATION_TEMPLATE = `
-[TABLE width="100%"]
-[TR]
-[td][IMG width="886px" alt="USMS.png"]https://imgur.com/F9gO8NW.png[/IMG]
-[CENTER][IMG width="886px" alt="USMS.png"]https://imgur.com/zQNkkZU.png[/IMG] [B][SIZE=6][COLOR=rgb(41, 105, 176)]ПОСТАНОВЛЕНИЕ MSLR-№[/COLOR][/SIZE]
-Руководствуясь своими полномочиями, предоставленными статьей 2.13 и 2.14 главы V Закона "О United States Marshals Service" и постановлением [COLOR=rgb(184, 49, 47)]{interrogationJudgeRank} {interrogationJudgeName}[/COLOR] о принятии искового заявления[COLOR=rgb(184, 49, 47)] №{interrogationCaseId}[/COLOR] в [COLOR=rgb(255, 255, 255)]{interrogationCourtType} суд[/COLOR] штата Сан-Андреас постановляю: 
-Кому: [COLOR=rgb(41, 105, 176)]{faction} {citizen}[/COLOR][IMG width="886px" alt="USMS.png"]https://imgur.com/t7mmvb7.png[/IMG] 
- 
-{obligations}
-
-
-[IMG width="886px" alt="USMS.png"]https://imgur.com/t7mmvb7.png[/IMG]
-[B][COLOR=rgb(184, 49, 47)]1.[/COLOR] В случае невозможности исполнения какого-либо из пункстов настоящего постановления соответствующее уведомление с указанием причин направить на указанную ниже почту;
- 
-[COLOR=rgb(184, 49, 47)]2.[/COLOR] Доказательства исполнения предоставить на указанную ниже почту; 
- 
-[COLOR=rgb(184, 49, 47)]3.[/COLOR] Адрес электронной почты Службы Маршалов: {prosecutorDiscord}
- 
-[COLOR=rgb(184, 49, 47)]4.[/COLOR] Постановление вступает в законную силу с момента публикации.
- 
-[COLOR=rgb(184, 49, 47)]5.[/COLOR] Срок исполнения постановления установить равным 24 часам. [/B] [IMG width="886px" alt="USMS.png"]https://imgur.com/T0zf5dm.png[/IMG][/CENTER]
-[RIGHT][B]
-{prosecutorPosition} 
- Дата: {currentDate}[/B]
-{prosecutorName}
-{prosecutorSignatureFormatted}[/RIGHT]
-[/TR]
-[/TABLE]
-`;
-
     const TYPE_TEMPLATES = {
         'Уведомление': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Уведомляю {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] о начатом досудебном разбирательстве.[/B]',
         'Боди-Камера': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Требую {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}], предоставить записи с боди-камеры за [COLOR=rgb(184, 49, 47)]{date_only}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR].[/B]',
         'Запрет на увольнение': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Уведомляю {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] об установленном [COLOR=rgb(184, 49, 47)]запрете на увольнение[/COLOR] на срок 72 часа.[/B]',
-        'Отстранение': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Обязать [COLOR=rgb(41, 105, 176)]{supervisor_rank}[/COLOR] [COLOR=rgb(184, 49, 47)]{supervisor_name}[/COLOR] отстранить {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] и [COLOR=rgb(184, 49, 47)]понизить[/COLOR] его на первый порядковый ранг.[/B]'
+        'Отстранение': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Обязать [COLOR=rgb(41, 105, 176)]{supervisor_rank}[/COLOR] [COLOR=rgb(184, 49, 47)]{supervisor_name}[/COLOR] отстранить {role} [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] и [COLOR=rgb(184, 49, 47)]понизить[/COLOR] его на первый порядковый ранг.[/B]',
+        'Допрос': '[COLOR=rgb(41, 105, 176)]{index}.[/COLOR] [B]Провести допрос {role} [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] в [COLOR=rgb(41, 105, 176)]{interrogationDate}[/COLOR] с [COLOR=rgb(184, 49, 47)]{interrogationTimeStart}[/COLOR] по [COLOR=rgb(184, 49, 47)]{interrogationTimeEnd}[/COLOR].[/B]'
     };
 
     const SUPERVISOR_RANKS = {
@@ -115,7 +86,7 @@
     };
 
     // ============================================================
-    // КЭШ DOM (ОПТИМИЗАЦИЯ)
+    // КЭШ DOM
     // ============================================================
     
     let DOM = null;
@@ -142,7 +113,6 @@
     
     const state = {
         currentTab: 'decree',
-        currentSubTab: 'decree-main',
         obligationCounter: 0,
         wantedCounter: 0
     };
@@ -184,7 +154,7 @@
     }
 
     // ============================================================
-    // ЗВУКИ (ленивая инициализация AudioContext)
+    // ЗВУКИ
     // ============================================================
     
     let _audioCtx = null;
@@ -229,10 +199,7 @@
         'prosecutorPosition', 'prosecutorName', 'prosecutorSignature',
         'prosecutorSignatureLink', 'prosecutorDiscord',
         'orderNumber', 'judgeName', 'judgeRank', 'courtType', 'caseId', 'faction', 'citizenName',
-        'wantedOrderNumber', 'wantedJudgeName', 'wantedJudgeRank', 'wantedCourtType', 'wantedCaseId',
-        'interrogationJudgeName', 'interrogationJudgeRank', 'interrogationCourtType', 'interrogationCaseId',
-        'interrogationName', 'interrogationPassport', 'interrogationDate',
-        'interrogationTimeStart', 'interrogationTimeEnd'
+        'wantedOrderNumber', 'wantedJudgeName', 'wantedJudgeRank', 'wantedCourtType', 'wantedCaseId'
     ];
 
     let _saveTimer = null;
@@ -247,9 +214,7 @@
                     if (el) data[id] = el.value;
                 });
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            } catch (e) {
-                console.warn('Ошибка сохранения:', e);
-            }
+            } catch (e) {}
         }, 400);
     }
 
@@ -339,18 +304,12 @@
         return valid;
     }
 
-    let _validateTimer = null;
     function validateAll() {
-        if (_validateTimer) return;
-        _validateTimer = setTimeout(() => {
-            _validateTimer = null;
-            validateSection($('decreeMainSection'), 'decreeMainValidation');
-            validateSection($('decreeInterrogationSection'), 'interrogationValidation');
-            validateActions();
-            validateSection($('wantedSection'), 'wantedInfoValidation');
-            validateWantedList();
-            updateFinalChecklist();
-        }, 100);
+        validateSection($('decreeMainSection'), 'decreeMainValidation');
+        validateActions();
+        validateSection($('wantedSection'), 'wantedInfoValidation');
+        validateWantedList();
+        updateFinalChecklist();
     }
 
     // ============================================================
@@ -368,12 +327,6 @@
                 total++;
             });
             if ($('factionSelect').value !== 'Гражданину') filled++;
-
-            const interrInputs = $$('#decreeInterrogationSection [data-required="true"]');
-            interrInputs.forEach(inp => {
-                if (inp.value.trim()) filled++;
-                total++;
-            });
 
             const actions = DOM.obligationsContainer.querySelectorAll('.obligation-item');
             if (actions.length > 0) filled++;
@@ -402,14 +355,12 @@
 
     function updateFinalChecklist() {
         const decreeValid = validateSection($('decreeMainSection'), 'decreeMainValidation');
-        const interrValid = validateSection($('decreeInterrogationSection'), 'interrogationValidation');
         const wantedInfoValid = validateSection($('wantedSection'), 'wantedInfoValidation');
         const actionsValid = validateActions();
         const wantedListValid = validateWantedList();
 
         const checks = [
             ['finalDecreeCheck', decreeValid],
-            ['finalInterrogationCheck', interrValid],
             ['finalWantedCheck', wantedInfoValid],
             ['finalActionsCheck', actionsValid],
             ['finalWantedListCheck', wantedListValid]
@@ -508,7 +459,8 @@
     function getTypeClass(type) {
         return {
             'Уведомление': 'notice', 'Боди-Камера': '',
-            'Запрет на увольнение': 'warning', 'Отстранение': 'danger'
+            'Запрет на увольнение': 'warning', 'Отстранение': 'danger',
+            'Допрос': 'notice'
         }[type] || '';
     }
 
@@ -519,7 +471,7 @@
         const itemId = 'obligation_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
         div.dataset.id = itemId;
 
-        const typeOptions = ['Уведомление', 'Боди-Камера', 'Запрет на увольнение', 'Отстранение'];
+        const typeOptions = ['Уведомление', 'Боди-Камера', 'Запрет на увольнение', 'Отстранение', 'Допрос'];
         const factionOptions = ['LSPD', 'LSSD', 'SANG', 'SASPA', 'FIB', 'GOV', 'EMS LS', 'EMS SS', 'Гражданин'];
         const currentType = data?.type || 'Уведомление';
         const typeClass = getTypeClass(currentType);
@@ -627,6 +579,21 @@
                     <div class="field">
                         <label>Имя Фамилия руководства</label>
                         <input type="text" class="obligation-supervisor" value="${data?.supervisor || ''}" placeholder="Dante DeRosse">
+                    </div>
+                `;
+            } else if (type === 'Допрос') {
+                extraHtml = `
+                    <div class="field">
+                        <label>Дата допроса</label>
+                        <input type="date" class="obligation-interrogation-date" value="${data?.interrogation_date || ''}">
+                    </div>
+                    <div class="field">
+                        <label>Время с</label>
+                        <input type="time" class="obligation-interrogation-time-from" value="${data?.interrogation_time_from || ''}" step="60">
+                    </div>
+                    <div class="field">
+                        <label>Время по</label>
+                        <input type="time" class="obligation-interrogation-time-to" value="${data?.interrogation_time_to || ''}" step="60">
                     </div>
                 `;
             }
@@ -840,6 +807,15 @@
             if (tt) extra.time_to = tt.value;
             const sup = item.querySelector('.obligation-supervisor');
             if (sup) extra.supervisor = sup.value;
+            
+            // Поля допроса
+            const idate = item.querySelector('.obligation-interrogation-date');
+            if (idate) extra.interrogation_date = idate.value;
+            const itf = item.querySelector('.obligation-interrogation-time-from');
+            if (itf) extra.interrogation_time_from = itf.value;
+            const itt = item.querySelector('.obligation-interrogation-time-to');
+            if (itt) extra.interrogation_time_to = itt.value;
+            
             result.push({ type, name, passport, ...extra });
         });
         return result;
@@ -885,6 +861,10 @@
                 data.date_only = formatDate(ob.date);
                 data.time_from = ob.time_from || '—';
                 data.time_to = ob.time_to || '—';
+            } else if (ob.type === 'Допрос') {
+                data.interrogationDate = formatDate(ob.interrogation_date);
+                data.interrogationTimeStart = ob.interrogation_time_from || '—';
+                data.interrogationTimeEnd = ob.interrogation_time_to || '—';
             }
             return template.replace(/\{(\w+)\}/g, (_, key) => data[key] ?? `{${key}}`);
         }).join('\n');
@@ -906,7 +886,7 @@
     }
 
     // ============================================================
-    // ГЕНЕРАЦИЯ (с requestAnimationFrame)
+    // ГЕНЕРАЦИЯ
     // ============================================================
     
     let _regenRaf = null;
@@ -944,24 +924,6 @@
             };
             result = result.replace(/\{(\w+)\}/g, (_, key) => data[key] ?? `{${key}}`);
             result = result.replace(/\{wantedList\}/g, renderWanted(collectWanted()));
-        } else if (state.currentTab === 'decree' && state.currentSubTab === 'decree-interrogation') {
-            result = INTERROGATION_TEMPLATE;
-            const data = {
-                interrogationJudgeName: $('interrogationJudgeName').value || '—',
-                interrogationJudgeRank: $('interrogationJudgeRank').value || 'Судьи',
-                interrogationCourtType: $('interrogationCourtType').value || 'окружного',
-                interrogationCaseId: $('interrogationCaseId').value || '—',
-                interrogationName: $('interrogationName').value || '—',
-                interrogationPassport: $('interrogationPassport').value || '—',
-                interrogationDate: formatDate($('interrogationDate').value),
-                interrogationTimeStart: $('interrogationTimeStart').value || '—',
-                interrogationTimeEnd: $('interrogationTimeEnd').value || '—',
-                currentDate,
-                prosecutorPosition: $('prosecutorPosition').value || '—',
-                prosecutorName: $('prosecutorName').value || '—',
-                prosecutorSignatureFormatted: signatureFormatted
-            };
-            result = result.replace(/\{(\w+)\}/g, (_, key) => data[key] ?? `{${key}}`);
         } else {
             result = DEFAULT_TEMPLATE;
             const data = {
@@ -1016,20 +978,6 @@
                 if (state.currentTab === 'final') updateFinalChecklist();
             });
         });
-
-        $$('.subtabs__btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                $$('.subtabs__btn').forEach(b => b.classList.remove('subtabs__btn--active'));
-                btn.classList.add('subtabs__btn--active');
-                state.currentSubTab = btn.dataset.sub;
-
-                $('decreeMainSection').style.display = state.currentSubTab === 'decree-main' ? 'block' : 'none';
-                $('decreeInterrogationSection').style.display = state.currentSubTab === 'decree-interrogation' ? 'block' : 'none';
-
-                validateAll();
-                regenerate();
-            });
-        });
     }
 
     // ============================================================
@@ -1073,16 +1021,11 @@
         $('resetTemplateBtn').addEventListener('click', () => {
             playSound('reset');
             ['orderNumber', 'judgeName', 'caseId', 'citizenName',
-             'wantedOrderNumber', 'wantedJudgeName', 'wantedCaseId',
-             'interrogationJudgeName', 'interrogationCaseId',
-             'interrogationName', 'interrogationPassport', 'interrogationDate',
-             'interrogationTimeStart', 'interrogationTimeEnd'].forEach(id => { $(id).value = ''; });
+             'wantedOrderNumber', 'wantedJudgeName', 'wantedCaseId'].forEach(id => { $(id).value = ''; });
             $('judgeRank').value = 'окружного судьи';
             $('courtType').value = 'окружной';
             $('wantedJudgeRank').value = 'окружного судьи';
             $('wantedCourtType').value = 'окружного суда';
-            $('interrogationJudgeRank').value = 'окружного судьи';
-            $('interrogationCourtType').value = 'окружной';
             DOM.obligationsContainer.innerHTML = '';
             DOM.wantedContainer.innerHTML = '';
             state.obligationCounter = 0;
@@ -1123,7 +1066,6 @@
             updateProgress();
         });
 
-        // Помечаем поля как "тронутые"
         $$('input[data-required="true"], select[data-required="true"], textarea[data-required="true"]').forEach(inp => {
             inp.addEventListener('blur', () => {
                 inp.dataset.touched = 'true';
@@ -1131,7 +1073,6 @@
             });
         });
 
-        // Делегирование ввода через родительский контейнер (ОПТИМИЗАЦИЯ)
         document.addEventListener('input', (e) => {
             const t = e.target;
             if (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA') {
@@ -1155,7 +1096,6 @@
         });
     }
 
-    // Троттлинг для прогресса и валидации
     let _progressRaf = null;
     function scheduleProgress() {
         if (_progressRaf) return;
