@@ -194,72 +194,27 @@
                     </div>
                 </section>
 
-                <!-- ===== ШАБЛОНЫ ===== -->
-                <section id="templatesSection" class="tab-content" style="display: none;">
-                    <div class="card">
-                        <div class="card__title">
-                            📨 Повестка в суд
-                            <span class="badge badge--partial" id="templatesValidation">⏳ Частично</span>
-                        </div>
-
-                        <div class="field">
-                            <label>Приветствие <span class="req">*</span></label>
-                            <select id="tplGreeting" data-required="true">
-                                <option value="Добрый Вечер">Добрый Вечер</option>
-                                <option value="Добрый День">Добрый День</option>
-                                <option value="Доброе Утро">Доброе Утро</option>
-                            </select>
-                        </div>
-
-                        <div class="field">
-                            <label>Имя Фамилия ответчика <span class="req">*</span></label>
-                            <input type="text" id="tplDefendantName" placeholder="Andrey Haters" data-required="true">
-                            <div class="field__error" id="tplDefendantNameError">Обязательное поле</div>
-                        </div>
-
-                        <div class="field">
-                            <label>Номер жетона <span class="req">*</span></label>
-                            <input type="text" id="tplBadgeNumber" placeholder="USMS-380938" data-required="true">
-                            <div class="field__error" id="tplBadgeNumberError">Обязательное поле</div>
-                        </div>
-
-                        <div class="field">
-                            <label>Номер иска <span class="req">*</span></label>
-                            <input type="text" id="tplCaseId" placeholder="2626" data-required="true">
-                            <div class="field__error" id="tplCaseIdError">Обязательное поле</div>
-                        </div>
-
-                        <div class="field">
-                            <label>URL искового дела <span class="req">*</span></label>
-                            <input type="text" id="tplCaseUrl" placeholder="https://forum.gta5rp.com/threads/isk-no2626.3420972/" data-required="true">
-                            <div class="field__error" id="tplCaseUrlError">Обязательное поле</div>
-                        </div>
-
-                        <div class="field">
-                            <label>Имя Фамилия судьи <span class="req">*</span></label>
-                            <input type="text" id="tplJudgeName" placeholder="Ivan Ivanov" data-required="true">
-                            <div class="field__error" id="tplJudgeNameError">Обязательное поле</div>
-                        </div>
-
-                        <div class="field">
-                            <label>Дата заседания <span class="req">*</span></label>
-                            <input type="date" id="tplCourtDate" data-required="true">
-                            <div class="field__error" id="tplCourtDateError">Обязательное поле</div>
-                        </div>
-
-                        <div class="field">
-                            <label>Время заседания <span class="req">*</span></label>
-                            <input type="time" id="tplCourtTime" data-required="true">
-                            <div class="field__error" id="tplCourtTimeError">Обязательное поле</div>
-                        </div>
-
-                        <div class="field">
-                            <label>Место заседания <span class="req">*</span></label>
-                            <input type="text" id="tplCourtLocation" value="зале судебных заседаний мэрии Los Santos" placeholder="Место" data-required="true">
-                            <div class="field__error" id="tplCourtLocationError">Обязательное поле</div>
-                        </div>
+            <!-- ===== ШАБЛОНЫ ===== -->
+            <section id="templatesSection" class="tab-content" style="display: none;">
+                <div class="card">
+                    <div class="card__title">📨 Выбор шаблона</div>
+                    <div class="field">
+                        <label>Тип шаблона <span class="req">*</span></label>
+                        <select id="tplType">
+                            <option value="subpoena">1. Повестка в суд</option>
+                            <option value="interrogation">2. Уведомление о допросе</option>
+                            <option value="investigation">3. Уведомление о разбирательстве</option>
+                            <option value="fine">4. Уведомление об оплате штрафа</option>
+                            <option value="ignored">5. Уведомление о невыполнении</option>
+                            <option value="response">6. Ответ на запрос материалов</option>
+                        </select>
                     </div>
-                </section>
+                </div>
+            
+                <div class="card card--grow" id="tplFieldsContainer">
+                    <!-- Поля вставляются динамически -->
+                </div>
+            </section>
             </div>
 
             <div class="layout__right">
