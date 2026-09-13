@@ -32,10 +32,10 @@
 [COLOR=rgb(184, 49, 47)]4.[/COLOR] Постановление вступает в законную силу с момента публикации.
  
 [COLOR=rgb(184, 49, 47)]5.[/COLOR] Срок исполнения постановления установить равным 24 часам. [/B] [IMG width="886px" alt="USMS.png"]https://imgur.com/T0zf5dm.png[/IMG][/CENTER]
-[RIGHT][B]    Директор USMS
-{prosecutorPosition} 
- Дата: {currentDate}[/B]
+[RIGHT][B]
+{prosecutorPosition}
 {prosecutorName}
+Дата: {currentDate}[/B]
 {prosecutorSignatureFormatted}[/RIGHT]
 [/TR]
 [/TABLE]
@@ -62,9 +62,9 @@
 [COLOR=rgb(184, 49, 47)]В бланке ареста в "поле статьи" указать номер постановления.[/COLOR][/B][/SIZE]
 [SIZE=5][B][COLOR=rgb(184, 49, 47)][IMG width="886px" alt="USMS.png"]https://imgur.com/AeiYwmY.png[/IMG][/COLOR][/B][/SIZE][/CENTER]
 [RIGHT][B]
-{prosecutorPosition} 
- Дата: {currentDate}[/B]
+{prosecutorPosition}
 {prosecutorName}
+Дата: {currentDate}[/B]
 {prosecutorSignatureFormatted}[/RIGHT]
 [/TR]
 [/TABLE]
@@ -84,13 +84,11 @@
 [/CENTER]
 {finalFacts}
 [CENTER][IMG width="886px" alt="USMS.png"]https://imgur.com/AeiYwmY.png[/IMG][/CENTER]
-[RIGHT]
-[B][COLOR=rgb(255, 255, 255)]{prosecutorPosition}
-{prosecutorName}[/COLOR][/B]
-[COLOR=rgb(255, 255, 255)][B]Дата: {currentDate}[/B][/COLOR]
-[B][COLOR=rgb(255, 255, 255)]Подпись:[/COLOR]
-{prosecutorSignatureFormatted}[/B]
-[/RIGHT][/td]
+[RIGHT][B]
+{prosecutorPosition}
+{prosecutorName}
+Дата: {currentDate}[/B]
+{prosecutorSignatureFormatted}[/RIGHT]
 [/TR]
 [/TABLE]
 `;
