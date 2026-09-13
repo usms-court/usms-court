@@ -179,44 +179,44 @@
     //             {location}, {car_number}, {reason}, {role}
     const FINAL_TEMPLATES = {
         case: {
-            success: 'Удалось получить личное дело и кадровую выписку, а также оповестить о начатом досудебном разбирательстве сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}].',
-            fail: 'Не удалось получить личное дело и кадровую выписку сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}]. Уведомление о начатом досудебном разбирательстве направлено.'
+            success: '[B]Удалось получить личное дело и кадровую выписку, а также оповестить о начатом досудебном разбирательстве сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}].[/B]',
+            fail: '[B]Не удалось получить личное дело и кадровую выписку сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}]. Уведомление о начатом досудебном разбирательстве направлено.[/B]'
         },
         bodycam: {
-            success: 'Удалось получить запись с боди-камеры сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR], относящуюся к задержанию истца.',
-            fail: 'Не удалось получить запись с боди-камеры сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR], относящуюся к задержанию истца, в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].'
+            success: '[B]Удалось получить запись с боди-камеры сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR], относящуюся к задержанию истца.[/B]',
+            fail: '[B]Не удалось получить запись с боди-камеры сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR], относящуюся к задержанию истца, в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].[/B]'
         },
         ban: {
-            success: 'Удалось установить запрет на увольнение сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] на срок 72 часа.',
-            fail: 'Не удалось установить запрет на увольнение сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] в связи с расторжением трудового договора до настоящего постановления.'
+            success: '[B]Удалось установить запрет на увольнение сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] на срок 72 часа.[/B]',
+            fail: '[B]Не удалось установить запрет на увольнение сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] в связи с расторжением трудового договора до настоящего постановления.[/B]'
         },
         cams: {
-            success: 'Удалось запросить и изъять записи с камер [COLOR=rgb(184, 49, 47)]{location}[/COLOR] за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] в период с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] до [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR].',
+            success: '[B]Удалось запросить и изъять записи с камер [COLOR=rgb(184, 49, 47)]{location}[/COLOR] за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] в период с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] до [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR].[/B]',
             fail: ''
         },
         offense: {
-            success: 'Удалось запросить все материалы правонарушения истца у сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}].',
-            fail: 'Не удалось запросить все материалы правонарушения истца у сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].'
+            success: '[B]Удалось запросить все материалы правонарушения истца у сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}].[/B]',
+            fail: '[B]Не удалось запросить все материалы правонарушения истца у сотрудника [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].[/B]'
         },
         reprimand: {
-            success: 'Удалось запросить и приобщить к материалам дела описание выговора, вынесенного истцу [COLOR=rgb(184, 49, 47)]{date}[/COLOR] сотрудником [COLOR=rgb(184, 49, 47)]{name}[/COLOR], с указанием установленного порядка его отработки.',
-            fail: 'Не удалось запросить и приобщить к материалам дела описание выговора, вынесенного истцу [COLOR=rgb(184, 49, 47)]{date}[/COLOR] сотрудником [COLOR=rgb(184, 49, 47)]{name}[/COLOR], в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].'
+            success: '[B]Удалось запросить и приобщить к материалам дела описание выговора, вынесенного истцу [COLOR=rgb(184, 49, 47)]{date}[/COLOR] сотрудником [COLOR=rgb(184, 49, 47)]{name}[/COLOR], с указанием установленного порядка его отработки.[/B]',
+            fail: '[B]Не удалось запросить и приобщить к материалам дела описание выговора, вынесенного истцу [COLOR=rgb(184, 49, 47)]{date}[/COLOR] сотрудником [COLOR=rgb(184, 49, 47)]{name}[/COLOR], в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].[/B]'
         },
         discipline: {
-            success: 'Удалось получить отчётность [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] по дисциплинарным взысканиям (выговорам).',
-            fail: 'Не удалось получить отчётность [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] по дисциплинарным взысканиям (выговорам) в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].'
+            success: '[B]Удалось получить отчётность [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] по дисциплинарным взысканиям (выговорам).[/B]',
+            fail: '[B]Не удалось получить отчётность [COLOR=rgb(41, 105, 176)]{faction}[/COLOR] по дисциплинарным взысканиям (выговорам) в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].[/B]'
         },
         dvr: {
-            success: 'Удалось получить запись с видеорегистратора машины с государственным номером "[COLOR=rgb(184, 49, 47)]{car_number}[/COLOR]" за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR].',
+            success: '[B]Удалось получить запись с видеорегистратора машины с государственным номером "[COLOR=rgb(184, 49, 47)]{car_number}[/COLOR]" за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR].[/B]',
             fail: ''
         },
         surveillance: {
-            success: 'Удалось получить запись с камер видеонаблюдения, находящихся в [COLOR=rgb(184, 49, 47)]{location}[/COLOR], за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR].',
+            success: '[B]Удалось получить запись с камер видеонаблюдения, находящихся в [COLOR=rgb(184, 49, 47)]{location}[/COLOR], за [COLOR=rgb(184, 49, 47)]{date}[/COLOR] с [COLOR=rgb(184, 49, 47)]{time_from}[/COLOR] по [COLOR=rgb(184, 49, 47)]{time_to}[/COLOR].[/B]',
             fail: ''
         },
         interrogation: {
-            success: 'Удалось произвести допрос [COLOR=rgb(41, 105, 176)]{role}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}].',
-            fail: 'Не удалось произвести допрос [COLOR=rgb(41, 105, 176)]{role}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].'
+            success: '[B]Удалось произвести допрос [COLOR=rgb(41, 105, 176)]{role}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}].[/B]',
+            fail: '[B]Не удалось произвести допрос [COLOR=rgb(41, 105, 176)]{role}[/COLOR] [COLOR=rgb(184, 49, 47)]{name}[/COLOR] [№ Паспорта: {passport}] в связи с [COLOR=rgb(184, 49, 47)]{reason}[/COLOR].[/B]'
         }
     };
 
