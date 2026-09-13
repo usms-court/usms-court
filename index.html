@@ -3,35 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USMS · Генератор постановлений v1.0</title>
+    <title>USMS · Генератор постановлений v2.0</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/png" href="logo.png">
 </head>
 <body>
 
-    <!-- ===== LOADER ===== -->
     <div id="loader" class="loader">
         <div class="loader__spinner"></div>
         <div class="loader__text">Загрузка USMS</div>
     </div>
 
-    <!-- ===== ФОН ===== -->
     <div class="bg-text" aria-hidden="true">
         <div class="bg-text__line">USMS</div>
         <div class="bg-text__line">MARSHALS</div>
         <div class="bg-text__line">JUSTICE</div>
     </div>
 
-    <!-- ===== КОНТЕЙНЕР ===== -->
     <div class="app" id="appContainer">
         
-        <!-- ===== TOP BAR ===== -->
         <header class="app-header">
             <div class="app-header__title">
-                <h1>⚖️ United States Marshals Service <span>Генератор v1.0</span></h1>
+                <h1>⚖️ United States Marshals Service <span>Генератор v4.0</span></h1>
                 <p class="app-header__subhead">Разработано Dante DeRosse · .dantezzz.</p>
             </div>
             <div class="app-header__actions">
@@ -40,7 +35,6 @@
             </div>
         </header>
 
-        <!-- ===== PROGRESS ===== -->
         <div class="progress" aria-label="Прогресс заполнения">
             <div class="progress__track">
                 <div class="progress__fill" id="progressFill"></div>
@@ -51,14 +45,13 @@
             </div>
         </div>
 
-        <!-- ===== ВКЛАДКИ ===== -->
         <nav class="tabs" id="tabsContainer">
             <button class="tabs__btn tabs__btn--active" data-tab="decree">📜 ПОСТАНОВЛЕНИЕ</button>
             <button class="tabs__btn" data-tab="wanted">🔍 РОЗЫСК</button>
             <button class="tabs__btn" data-tab="final">📋 ИТОГОВОЕ</button>
+            <button class="tabs__btn" data-tab="templates">📨 ШАБЛОНЫ</button>
         </nav>
 
-        <!-- ===== ОСНОВНОЙ КОНТЕНТ ===== -->
         <div class="layout">
             <div class="layout__left">
                 
@@ -200,11 +193,78 @@
                         <button class="btn btn--primary btn--block" id="addFinalBtn">➕ Добавить факт</button>
                     </div>
                 </section>
+
+                <!-- ===== ШАБЛОНЫ ===== -->
+                <section id="templatesSection" class="tab-content" style="display: none;">
+                    <div class="card">
+                        <div class="card__title">
+                            📨 Повестка в суд
+                            <span class="badge badge--partial" id="templatesValidation">⏳ Частично</span>
+                        </div>
+
+                        <div class="field">
+                            <label>Приветствие <span class="req">*</span></label>
+                            <select id="tplGreeting" data-required="true">
+                                <option value="Добрый Вечер">Добрый Вечер</option>
+                                <option value="Добрый День">Добрый День</option>
+                                <option value="Доброе Утро">Доброе Утро</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label>Имя Фамилия ответчика <span class="req">*</span></label>
+                            <input type="text" id="tplDefendantName" placeholder="Andrey Haters" data-required="true">
+                            <div class="field__error" id="tplDefendantNameError">Обязательное поле</div>
+                        </div>
+
+                        <div class="field">
+                            <label>Номер жетона <span class="req">*</span></label>
+                            <input type="text" id="tplBadgeNumber" placeholder="USMS-380938" data-required="true">
+                            <div class="field__error" id="tplBadgeNumberError">Обязательное поле</div>
+                        </div>
+
+                        <div class="field">
+                            <label>Номер иска <span class="req">*</span></label>
+                            <input type="text" id="tplCaseId" placeholder="2626" data-required="true">
+                            <div class="field__error" id="tplCaseIdError">Обязательное поле</div>
+                        </div>
+
+                        <div class="field">
+                            <label>URL искового дела <span class="req">*</span></label>
+                            <input type="text" id="tplCaseUrl" placeholder="https://forum.gta5rp.com/threads/isk-no2626.3420972/" data-required="true">
+                            <div class="field__error" id="tplCaseUrlError">Обязательное поле</div>
+                        </div>
+
+                        <div class="field">
+                            <label>Имя Фамилия судьи <span class="req">*</span></label>
+                            <input type="text" id="tplJudgeName" placeholder="Ivan Ivanov" data-required="true">
+                            <div class="field__error" id="tplJudgeNameError">Обязательное поле</div>
+                        </div>
+
+                        <div class="field">
+                            <label>Дата заседания <span class="req">*</span></label>
+                            <input type="date" id="tplCourtDate" data-required="true">
+                            <div class="field__error" id="tplCourtDateError">Обязательное поле</div>
+                        </div>
+
+                        <div class="field">
+                            <label>Время заседания <span class="req">*</span></label>
+                            <input type="time" id="tplCourtTime" data-required="true">
+                            <div class="field__error" id="tplCourtTimeError">Обязательное поле</div>
+                        </div>
+
+                        <div class="field">
+                            <label>Место заседания <span class="req">*</span></label>
+                            <input type="text" id="tplCourtLocation" value="зале судебных заседаний мэрии Los Santos" placeholder="Место" data-required="true">
+                            <div class="field__error" id="tplCourtLocationError">Обязательное поле</div>
+                        </div>
+                    </div>
+                </section>
             </div>
 
             <div class="layout__right">
                 <div class="card card--grow card--output">
-                    <div class="card__title">📄 Результат (BBCode)</div>
+                    <div class="card__title">📄 Результат</div>
                     <pre class="output" id="outputDisplay">Здесь будет сгенерированный документ...</pre>
                 </div>
 
@@ -219,7 +279,6 @@
         </div>
     </div>
 
-    <!-- ===== МОДАЛКА НАСТРОЕК ===== -->
     <div class="modal" id="settingsModal">
         <div class="modal__box">
             <div class="modal__title">
@@ -251,7 +310,6 @@
         </div>
     </div>
 
-    <!-- ===== МОДАЛКА ПОМОЩИ ===== -->
     <div class="modal modal--help" id="helpModal">
         <div class="modal__box">
             <div class="modal__title">
@@ -259,7 +317,30 @@
                 <button class="modal__close" id="closeHelpBtn">✕</button>
             </div>
             <div class="help">
-                <h3>Я не придумал что написать, поэтому пока похуй</h3>
+                <h3>📌 Постановление</h3>
+                <ul>
+                    <li>Заполните <b>Основные данные</b></li>
+                    <li>Добавляйте <b>Действия</b> кнопкой ➕</li>
+                    <li>Типы: Уведомление, Боди-Камера, Запрет, Отстранение, Допрос</li>
+                    <li>Перетаскивайте действия для смены порядка</li>
+                </ul>
+                <h3>🔍 Розыск</h3>
+                <ul>
+                    <li>Заполните общую информацию</li>
+                    <li>Добавьте разыскиваемых с их статьями</li>
+                </ul>
+                <h3>📋 Итоговое</h3>
+                <ul>
+                    <li>Добавляйте <b>факты</b> разбирательства</li>
+                    <li>Для каждого факта выбирайте: <b>Удалось</b> или <b>Не удалось</b></li>
+                    <li>Факты автоматически нумеруются</li>
+                </ul>
+                <h3>📨 Шаблоны</h3>
+                <ul>
+                    <li>Повестка в суд в формате <b>Discord Markdown</b></li>
+                    <li>Заполните все поля — текст сгенерируется автоматически</li>
+                    <li>Поддерживаются: <b>**жирный**</b>, <i>*курсив*</i>, <code>`код`</code>, <a href="#">[ссылки]</a></li>
+                </ul>
             </div>
         </div>
     </div>
