@@ -1,5 +1,5 @@
 /* ============================================================
-   USMS GENERATOR — SCRIPT v4.0 (с разделом ШАБЛОНЫ)
+   USMS GENERATOR — SCRIPT v4.2 (тумблеры в шаблонах)
    ============================================================ */
 
 (function () {
@@ -8,7 +8,7 @@
     const STORAGE_KEY = 'usms_generator_settings_v4';
 
     // ============================================================
-    // ШАБЛОНЫ
+    // ОСНОВНЫЕ ШАБЛОНЫ BBCode
     // ============================================================
     
     const DEFAULT_TEMPLATE = `
@@ -96,23 +96,6 @@
 `;
 
     // ============================================================
-    // ШАБЛОН ПОВЕСТКИ (Discord Markdown)
-    // ============================================================
-    
-    const SUBPOENA_TEMPLATE = `## {greeting}, {defendantName}!
-
-Я являюсь **{prosecutorPosition} {prosecutorName}**. Мой номер жетона: **{badgeNumber}**
-
-Вам направляется официальная повестка в суд по **[исковому делу №{caseId}]({caseUrl})**, где вы являетесь ***ответчиком***. Заседание назначено ведущим судьей на **{courtDate}** в **{courtTime}** в *{courtLocation}*.
-
-\`Если потребуется дополнительная информация или разъяснения, пожалуйста, свяжитесь со мной.\`
-
-**С уважением,
-{prosecutorPosition}
-{prosecutorName}
-**`;
-
-    // ============================================================
     // ДЕЙСТВИЯ ДЛЯ ПОСТАНОВЛЕНИЯ
     // ============================================================
     
@@ -148,46 +131,16 @@
     };
 
     const FINAL_FIELDS_CONFIG = {
-        case: {
-            success: ['faction', 'name', 'passport'],
-            fail: ['faction', 'name', 'passport']
-        },
-        bodycam: {
-            success: ['faction', 'name', 'passport', 'date', 'time_from', 'time_to'],
-            fail: ['faction', 'name', 'passport', 'date', 'time_from', 'time_to', 'reason']
-        },
-        ban: {
-            success: ['faction', 'name', 'passport'],
-            fail: ['faction', 'name', 'passport']
-        },
-        cams: {
-            success: ['location', 'date', 'time_from', 'time_to'],
-            fail: []
-        },
-        offense: {
-            success: ['faction', 'name', 'passport'],
-            fail: ['faction', 'name', 'passport', 'reason']
-        },
-        reprimand: {
-            success: ['date', 'name'],
-            fail: ['date', 'name', 'reason']
-        },
-        discipline: {
-            success: ['faction'],
-            fail: ['faction', 'reason']
-        },
-        dvr: {
-            success: ['car_number', 'date', 'time_from', 'time_to'],
-            fail: []
-        },
-        surveillance: {
-            success: ['location', 'date', 'time_from', 'time_to'],
-            fail: []
-        },
-        interrogation: {
-            success: ['faction', 'name', 'passport'],
-            fail: ['faction', 'name', 'passport', 'reason']
-        }
+        case: { success: ['faction', 'name', 'passport'], fail: ['faction', 'name', 'passport'] },
+        bodycam: { success: ['faction', 'name', 'passport', 'date', 'time_from', 'time_to'], fail: ['faction', 'name', 'passport', 'date', 'time_from', 'time_to', 'reason'] },
+        ban: { success: ['faction', 'name', 'passport'], fail: ['faction', 'name', 'passport'] },
+        cams: { success: ['location', 'date', 'time_from', 'time_to'], fail: [] },
+        offense: { success: ['faction', 'name', 'passport'], fail: ['faction', 'name', 'passport', 'reason'] },
+        reprimand: { success: ['date', 'name'], fail: ['date', 'name', 'reason'] },
+        discipline: { success: ['faction'], fail: ['faction', 'reason'] },
+        dvr: { success: ['car_number', 'date', 'time_from', 'time_to'], fail: [] },
+        surveillance: { success: ['location', 'date', 'time_from', 'time_to'], fail: [] },
+        interrogation: { success: ['faction', 'name', 'passport'], fail: ['faction', 'name', 'passport', 'reason'] }
     };
 
     const FINAL_TEMPLATES = {
@@ -243,6 +196,93 @@
     const FACTION_OPTIONS = ['LSPD', 'LSSD', 'SANG', 'SASPA', 'FIB', 'GOV', 'EMS LS', 'EMS SS', 'Гражданин'];
 
     // ============================================================
+    // КОНФИГ ПОЛЕЙ ДЛЯ КАЖДОГО DISCORD-ШАБЛОНА
+    // ============================================================
+    
+    const TPL_FIELDS_CONFIG = {
+        subpoena: {
+            title: '📨 Повестка в суд',
+            fields: [
+                { id: 'tplGreeting', label: 'Приветствие', type: 'select', options: ['Добрый Вечер', 'Добрый день', 'Доброе Утро'], default: 'Добрый Вечер' },
+                { id: 'tplDefendantName', label: 'Имя Фамилия ответчика', type: 'text', placeholder: 'Andrey Haters' },
+                { id: 'tplBadgeNumber', label: 'Номер жетона (без USMS-)', type: 'text', placeholder: '380938' },
+                { id: 'tplCaseId', label: 'Номер иска', type: 'text', placeholder: '2626' },
+                { id: 'tplCaseUrl', label: 'URL искового дела', type: 'text', placeholder: 'https://forum.gta5rp.com/...' },
+                { id: 'tplCourtDate', label: 'Дата заседания', type: 'date' },
+                { id: 'tplCourtTime', label: 'Время заседания', type: 'time' },
+                { id: 'tplCourtLocation', label: 'Место заседания', type: 'text', default: 'зале судебных заседаний мэрии Los Santos' }
+            ]
+        },
+        interrogation: {
+            title: '🎙️ Уведомление о допросе',
+            fields: [
+                { id: 'tplGreeting', label: 'Приветствие', type: 'select', options: ['Добрый день', 'Добрый Вечер', 'Доброе Утро'], default: 'Добрый день' },
+                { id: 'tplDefendantName', label: 'Имя Фамилия', type: 'text', placeholder: 'Simon Silverhand' },
+                { id: 'tplBadgeNumber', label: 'Номер жетона (без USMS-)', type: 'text', placeholder: '544877' },
+                { id: 'tplOrderNumber', label: 'Номер постановления', type: 'text', placeholder: '593' },
+                { id: 'tplPlace', label: 'Место проведения', type: 'text', default: 'Капитолий' },
+                { id: 'tplCourtDate', label: 'Дата явки', type: 'date' },
+                { id: 'tplTimeFrom', label: 'Время с', type: 'time' },
+                { id: 'tplTimeTo', label: 'Время до', type: 'time' }
+            ]
+        },
+        investigation: {
+            title: '🔍 Уведомление о разбирательстве',
+            fields: [
+                { id: 'tplGreeting', label: 'Приветствие', type: 'select', options: ['Добрый день', 'Добрый Вечер', 'Доброе Утро'], default: 'Добрый день' },
+                { id: 'tplDefendantName', label: 'Имя Фамилия', type: 'text', placeholder: 'Иван Иванов' },
+                { id: 'tplBadgeNumber', label: 'Номер жетона (без USMS-)', type: 'text', placeholder: '544877' },
+                { id: 'tplCaseId', label: 'Номер иска', type: 'text', placeholder: '2625' }
+            ],
+            toggles: [
+                {
+                    id: 'tplToggleBodycam',
+                    label: '☑️ Включить блок «Боди-камера»',
+                    fields: [
+                        { id: 'tplOrderNumber', label: 'Номер постановления', type: 'text', placeholder: '623' },
+                        { id: 'tplCourtDate', label: 'Дата записи', type: 'date' },
+                        { id: 'tplTimeFrom', label: 'Время с', type: 'time' },
+                        { id: 'tplTimeTo', label: 'Время по', type: 'time' }
+                    ]
+                },
+                {
+                    id: 'tplToggleBan',
+                    label: '☑️ Включить блок «Запрет на увольнение»',
+                    fields: []
+                }
+            ]
+        },
+        fine: {
+            title: '💰 Уведомление об оплате штрафа',
+            fields: [
+                { id: 'tplGreeting', label: 'Приветствие', type: 'select', options: ['Добрый день', 'Добрый Вечер', 'Доброе Утро'], default: 'Добрый день' },
+                { id: 'tplDefendantName', label: 'Имя Фамилия', type: 'text', placeholder: 'Prokhor Oopsie' },
+                { id: 'tplBadgeNumber', label: 'Номер жетона (без USMS-)', type: 'text', placeholder: '544877' },
+                { id: 'tplCaseId', label: 'Номер иска', type: 'text', placeholder: '2605' },
+                { id: 'tplCourtType', label: 'Тип суда', type: 'select', options: ['Окружного', 'Кассационного', 'Апелляционного', 'Верховного'], default: 'Окружного' },
+                { id: 'tplArticle', label: 'Статья', type: 'text', placeholder: '10.1' },
+                { id: 'tplCodeType', label: 'Кодекс', type: 'select', options: ['АК СА', 'УК СА'], default: 'АК СА' },
+                { id: 'tplAmount', label: 'Сумма штрафа', type: 'text', placeholder: '40 000' }
+            ]
+        },
+        ignored: {
+            title: '⚠️ Уведомление о невыполнении',
+            fields: [
+                { id: 'tplGreeting', label: 'Приветствие', type: 'select', options: ['Добрый день', 'Добрый Вечер', 'Доброе Утро'], default: 'Добрый день' },
+                { id: 'tplBadgeNumber', label: 'Номер жетона (без USMS-)', type: 'text', placeholder: '544877' }
+            ]
+        },
+        response: {
+            title: '📩 Ответ на запрос материалов',
+            fields: [
+                { id: 'tplGreeting', label: 'Приветствие', type: 'select', options: ['Добрый день', 'Добрый Вечер', 'Доброе Утро'], default: 'Добрый день' },
+                { id: 'tplDefendantName', label: 'Имя Фамилия', type: 'text', placeholder: 'Alexandr Kozmenko' },
+                { id: 'tplBadgeNumber', label: 'Номер жетона (без USMS-)', type: 'text', placeholder: '544877' }
+            ]
+        }
+    };
+
+    // ============================================================
     // КЭШ DOM
     // ============================================================
     
@@ -259,6 +299,7 @@
             obligationsContainer: document.getElementById('obligationsContainer'),
             wantedContainer: document.getElementById('wantedContainer'),
             finalContainer: document.getElementById('finalContainer'),
+            tplFieldsContainer: document.getElementById('tplFieldsContainer'),
             appContainer: document.getElementById('appContainer')
         };
     }
@@ -274,7 +315,8 @@
         currentTab: 'decree',
         obligationCounter: 0,
         wantedCounter: 0,
-        finalCounter: 0
+        finalCounter: 0,
+        tplValues: {}
     };
 
     // ============================================================
@@ -363,8 +405,7 @@
         'prosecutorSignatureLink', 'prosecutorDiscord',
         'orderNumber', 'judgeName', 'judgeRank', 'courtType', 'caseId', 'faction', 'citizenName',
         'wantedOrderNumber', 'wantedJudgeName', 'wantedJudgeRank', 'wantedCourtType', 'wantedCaseId',
-        'tplGreeting', 'tplDefendantName', 'tplBadgeNumber', 'tplCaseId', 'tplCaseUrl',
-        'tplJudgeName', 'tplCourtDate', 'tplCourtTime', 'tplCourtLocation'
+        'tplType'
     ];
 
     let _saveTimer = null;
@@ -372,12 +413,14 @@
         if (_saveTimer) return;
         _saveTimer = setTimeout(() => {
             _saveTimer = null;
+            saveTplValues();
             try {
                 const data = {};
                 STORAGE_FIELDS.forEach(id => {
                     const el = $(id);
                     if (el) data[id] = el.value;
                 });
+                data.tplValues = state.tplValues;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             } catch (e) {}
         }, 400);
@@ -385,14 +428,26 @@
 
     function saveSettingsNow() {
         if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
+        saveTplValues();
         try {
             const data = {};
             STORAGE_FIELDS.forEach(id => {
                 const el = $(id);
                 if (el) data[id] = el.value;
             });
+            data.tplValues = state.tplValues;
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         } catch (e) {}
+    }
+
+    function saveTplValues() {
+        // Собираем все поля из контейнера шаблонов
+        if (!DOM.tplFieldsContainer) return;
+        DOM.tplFieldsContainer.querySelectorAll('input, select, textarea').forEach(el => {
+            if (el.id) {
+                state.tplValues[el.id] = el.type === 'checkbox' ? el.checked : el.value;
+            }
+        });
     }
 
     function loadSettings() {
@@ -404,6 +459,7 @@
                 const el = $(id);
                 if (el && data[id] !== undefined) el.value = data[id];
             });
+            if (data.tplValues) state.tplValues = data.tplValues;
             return true;
         } catch (e) {
             return false;
@@ -480,29 +536,12 @@
         return valid;
     }
 
-    function validateTemplates() {
-        const section = $('templatesSection');
-        if (!section) return true;
-        const inputs = $$('[data-required="true"]', section);
-        let valid = true;
-        inputs.forEach(input => {
-            if (!validateField(input)) valid = false;
-        });
-        const badge = $('templatesValidation');
-        if (badge) {
-            badge.textContent = valid ? '✅ Заполнено' : '⚠️ Частично';
-            badge.className = 'badge ' + (valid ? 'badge--valid' : 'badge--partial');
-        }
-        return valid;
-    }
-
     function validateAll() {
         validateSection($('decreeMainSection'), 'decreeMainValidation');
         validateActions();
         validateSection($('wantedSection'), 'wantedInfoValidation');
         validateWantedList();
         validateFinalFacts();
-        validateTemplates();
     }
 
     // ============================================================
@@ -538,9 +577,9 @@
             if (facts.length > 0) filled++;
             total++;
         } else if (state.currentTab === 'templates') {
-            const inputs = $$('#templatesSection [data-required="true"]');
+            const inputs = $$('#templatesSection input, #templatesSection select, #templatesSection textarea');
             inputs.forEach(inp => {
-                if (inp.value.trim()) filled++;
+                if (inp.type === 'checkbox' || inp.value.trim()) filled++;
                 total++;
             });
         }
@@ -643,7 +682,7 @@
     }
 
     // ============================================================
-    // ДЕЙСТВИЯ (Постановление)
+    // ДЕЙСТВИЯ
     // ============================================================
     
     function getSupervisorRank(faction) {
@@ -1045,6 +1084,105 @@
     }
 
     // ============================================================
+    // ШАБЛОНЫ DISCORD — рендер полей
+    // ============================================================
+    
+    function renderTplField(field) {
+        const val = state.tplValues[field.id] ?? (field.default || '');
+        switch (field.type) {
+            case 'select':
+                return `
+                    <div class="field">
+                        <label>${field.label}</label>
+                        <select id="${field.id}" class="tpl-field">
+                            ${(field.options || []).map(o => `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`).join('')}
+                        </select>
+                    </div>`;
+            case 'date':
+                return `
+                    <div class="field">
+                        <label>${field.label}</label>
+                        <input type="date" id="${field.id}" class="tpl-field" value="${val}">
+                    </div>`;
+            case 'time':
+                return `
+                    <div class="field">
+                        <label>${field.label}</label>
+                        <input type="time" id="${field.id}" class="tpl-field" value="${val}" step="60">
+                    </div>`;
+            default:
+                return `
+                    <div class="field">
+                        <label>${field.label}</label>
+                        <input type="text" id="${field.id}" class="tpl-field" value="${val}" placeholder="${field.placeholder || ''}">
+                    </div>`;
+        }
+    }
+
+    function renderTemplatesSection() {
+        const container = DOM.tplFieldsContainer;
+        if (!container) return;
+
+        const type = $('tplType')?.value || 'subpoena';
+        const config = TPL_FIELDS_CONFIG[type];
+        if (!config) return;
+
+        let html = `<div class="card__title">${config.title}</div>`;
+
+        // Базовые поля
+        config.fields.forEach(f => {
+            html += renderTplField(f);
+        });
+
+        // Тумблеры (если есть)
+        if (config.toggles && config.toggles.length) {
+            config.toggles.forEach(tg => {
+                const toggleVal = state.tplValues[tg.id] || false;
+                html += `
+                    <div class="tpl-toggle-wrapper">
+                        <div class="tpl-toggle">
+                            <input type="checkbox" id="${tg.id}" class="tpl-toggle-check" ${toggleVal ? 'checked' : ''}>
+                            <label for="${tg.id}">${tg.label}</label>
+                        </div>
+                        <div class="tpl-toggle-fields" id="${tg.id}Fields" style="display: ${toggleVal ? 'block' : 'none'};">
+                            ${tg.fields.map(f => renderTplField(f)).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        container.innerHTML = html;
+
+        // Привязываем обработчики
+        container.querySelectorAll('.tpl-field').forEach(el => {
+            el.addEventListener('input', () => {
+                state.tplValues[el.id] = el.value;
+                scheduleRegenerate();
+                saveSettings();
+            });
+            el.addEventListener('change', () => {
+                state.tplValues[el.id] = el.value;
+                scheduleRegenerate();
+                saveSettings();
+            });
+        });
+
+        // Обработчики тумблеров
+        container.querySelectorAll('.tpl-toggle-check').forEach(cb => {
+            cb.addEventListener('change', () => {
+                state.tplValues[cb.id] = cb.checked;
+                const fieldsDiv = document.getElementById(cb.id + 'Fields');
+                if (fieldsDiv) {
+                    fieldsDiv.style.display = cb.checked ? 'block' : 'none';
+                }
+                scheduleRegenerate();
+                saveSettings();
+            });
+        });
+    }
+
+    // ============================================================
     // СБОР ДАННЫХ
     // ============================================================
     
@@ -1183,23 +1321,119 @@
     }
 
     // ============================================================
-    // ШАБЛОНЫ (Discord Markdown)
+    // РЕНДЕР DISCORD-ШАБЛОНОВ
     // ============================================================
     
-    function renderSubpoena() {
-        const data = {
-            greeting: $('tplGreeting').value || 'Добрый Вечер',
-            defendantName: $('tplDefendantName').value || '—',
-            prosecutorPosition: $('prosecutorPosition').value || '—',
-            prosecutorName: $('prosecutorName').value || '—',
-            badgeNumber: $('tplBadgeNumber').value || '—',
-            caseId: $('tplCaseId').value || '—',
-            caseUrl: $('tplCaseUrl').value || '#',
-            courtDate: formatDate($('tplCourtDate').value),
-            courtTime: $('tplCourtTime').value || '—',
-            courtLocation: $('tplCourtLocation').value || '—'
-        };
-        return SUBPOENA_TEMPLATE.replace(/\{(\w+)\}/g, (_, key) => data[key] ?? `{${key}}`);
+    function getTplValue(id, fallback = '—') {
+        const v = state.tplValues[id];
+        if (v === undefined || v === null || v === '') return fallback;
+        return v;
+    }
+
+    function renderDiscordTemplates() {
+        const type = $('tplType')?.value || 'subpoena';
+        const prosecutorPosition = $('prosecutorPosition').value || '—';
+        const prosecutorName = $('prosecutorName').value || '—';
+
+        if (type === 'subpoena') {
+            const tpl = `## ${getTplValue('tplGreeting', 'Добрый Вечер')}, ${getTplValue('tplDefendantName')}!
+
+Я являюсь **${prosecutorPosition} ${prosecutorName}**. Мой номер жетона: **USMS-${getTplValue('tplBadgeNumber')}**
+
+Вам направляется официальная повестка в суд по **[исковому делу №${getTplValue('tplCaseId')}](${getTplValue('tplCaseUrl', '#')})**, где вы являетесь ***ответчиком***. Заседание назначено ведущим судьей на **${formatDate(getTplValue('tplCourtDate', ''))}** в **${getTplValue('tplCourtTime')}** в *${getTplValue('tplCourtLocation')}*.
+
+\`Если потребуется дополнительная информация или разъяснения, пожалуйста, свяжитесь со мной.\`
+
+**С уважением,
+${prosecutorPosition}
+${prosecutorName}
+**`;
+            return tpl;
+        }
+
+        if (type === 'interrogation') {
+            return `${getTplValue('tplGreeting', 'Добрый день')}, ${getTplValue('tplDefendantName')}! Меня зовут ${prosecutorName}, я являюсь ${prosecutorPosition} USMS. Моё удостоверение USMS-[${getTplValue('tplBadgeNumber')}].
+
+Уведомляю Вас на основании постановления MSLR‑№${getTplValue('tplOrderNumber')} о необходимости явки для проведения допроса.
+
+Место проведения: ${getTplValue('tplPlace', 'Капитолий')}.
+Период явки: ${formatDate(getTplValue('tplCourtDate', ''))} 
+Временной интервал: с ${getTplValue('tplTimeFrom')} до ${getTplValue('tplTimeTo')}.
+
+Для согласования точного времени встречи прошу направить официальное письмо на электронную почту сотрудника USMS.
+
+С уважением,
+${prosecutorPosition} USMS
+${prosecutorName}
+`;
+        }
+
+        if (type === 'investigation') {
+            let text = `${getTplValue('tplGreeting', 'Добрый день')}! Меня зовут ${prosecutorName}, я являюсь ${prosecutorPosition} USMS. Моё удостоверение USMS-[${getTplValue('tplBadgeNumber')}].
+
+Уведомляю, о начатом в отношение Вас досудебном разбирательстве. Иск №${getTplValue('tplCaseId')} ОС.`;
+
+            // Тумблер боди-камеры
+            if (state.tplValues.tplToggleBodycam) {
+                text += ` На основании ПОСТАНОВЛЕНИЕ MSLR-№${getTplValue('tplOrderNumber')} предоставить записи с боди-камеры за ${formatDate(getTplValue('tplCourtDate', ''))} с ${getTplValue('tplTimeFrom')} по ${getTplValue('tplTimeTo')} и направить её на электронную почту.`;
+            }
+
+            // Тумблер запрета
+            if (state.tplValues.tplToggleBan) {
+                text += ` Так же уведомляю Вас о запрете на увольнение сроком 72 часа.`;
+            }
+
+            text += `
+
+Если потребуется дополнительная информация или разъяснения, пожалуйста, свяжитесь со мной.
+
+С уважением,
+${prosecutorName}
+${prosecutorPosition} USMS
+`;
+            return text;
+        }
+
+        if (type === 'fine') {
+            return `${getTplValue('tplGreeting', 'Добрый день')}, ${getTplValue('tplDefendantName')}. Меня зовут ${prosecutorName}, я являюсь ${prosecutorPosition} USMS. Моё удостоверение USMS-[${getTplValue('tplBadgeNumber')}].
+
+Настоящим информирую вас о необходимости срочной оплаты штрафов, наложенных по постановлению ${getTplValue('tplCourtType', 'Окружного')} суда по иску №${getTplValue('tplCaseId')}. В соответствии с решением, вам необходимо выплатить следующие суммы:
+
+Штраф по статье ${getTplValue('tplArticle')} ${getTplValue('tplCodeType', 'АК СА')}: ${getTplValue('tplAmount')} долларов США
+
+Сумма должна быть оплачена в течение 72 часов с момента публикации данного постановления.
+
+Просим отнестись к данному уведомлению с необходимой степенью серьезности и выполнить оплату в указанный срок, чтобы избежать дальнейших мер.
+
+С уважением,
+${prosecutorName}
+${prosecutorPosition} USMS
+`;
+        }
+
+        if (type === 'ignored') {
+            return `${getTplValue('tplGreeting', 'Добрый день')}. Меня зовут ${prosecutorName}, я являюсь ${prosecutorPosition} USMS. Моё удостоверение USMS-[${getTplValue('tplBadgeNumber')}].
+
+Время на выполнение постановления истекло. Ваше полное игнорирование требования - считается невыполнением постановления.
+
+С уважением,
+${prosecutorName}
+${prosecutorPosition} USMS
+`;
+        }
+
+        if (type === 'response') {
+            return `${getTplValue('tplGreeting', 'Добрый день')}, ${getTplValue('tplDefendantName')}. Меня зовут ${prosecutorName}, я являюсь ${prosecutorPosition} USMS. Моё удостоверение USMS-[${getTplValue('tplBadgeNumber')}].
+
+Сообщаю Вам, что запрошенные Вами материалы находятся в открытом доступе в теле иска и доступны для ознакомления. Дополнительных сведений от истца не поступало. 
+
+С уважением,
+${prosecutorName}
+${prosecutorPosition} USMS
+`;
+        }
+
+        return '';
     }
 
     // ============================================================
@@ -1252,7 +1486,7 @@
             result = result.replace(/\{(\w+)\}/g, (_, key) => data[key] ?? `{${key}}`);
             result = result.replace(/\{finalFacts\}/g, renderFinal(collectFinal()));
         } else if (state.currentTab === 'templates') {
-            result = renderSubpoena();
+            result = renderDiscordTemplates();
         } else {
             result = DEFAULT_TEMPLATE;
             const data = {
@@ -1306,6 +1540,13 @@
                 saveSettings();
             });
         });
+
+        // Смена типа шаблона
+        $('tplType').addEventListener('change', () => {
+            renderTemplatesSection();
+            scheduleRegenerate();
+            saveSettings();
+        });
     }
 
     // ============================================================
@@ -1349,6 +1590,7 @@
 
         $('resetTemplateBtn').addEventListener('click', () => {
             playSound('reset');
+            state.tplValues = {};
             STORAGE_FIELDS.forEach(id => {
                 const el = $(id);
                 if (el && el.tagName === 'INPUT' && el.type !== 'checkbox') el.value = '';
@@ -1357,8 +1599,6 @@
             $('courtType').value = 'окружной';
             $('wantedJudgeRank').value = 'окружного судьи';
             $('wantedCourtType').value = 'окружного суда';
-            $('tplGreeting').value = 'Добрый Вечер';
-            $('tplCourtLocation').value = 'зале судебных заседаний мэрии Los Santos';
             DOM.obligationsContainer.innerHTML = '';
             DOM.wantedContainer.innerHTML = '';
             DOM.finalContainer.innerHTML = '';
@@ -1368,6 +1608,7 @@
             DOM.actionsCount.textContent = '0';
             DOM.wantedCount.textContent = '0';
             DOM.finalCount.textContent = '0';
+            renderTemplatesSection();
             saveSettingsNow();
             regenerate();
             updateProgress();
@@ -1376,6 +1617,7 @@
 
         $('saveSettingsBtn').addEventListener('click', () => {
             playSound('save');
+            saveTplValues();
             saveSettingsNow();
             regenerate();
             closeModal($('settingsModal'));
@@ -1471,6 +1713,7 @@
         initDragDrop(DOM.wantedContainer);
         initDragDrop(DOM.finalContainer);
 
+        renderTemplatesSection();
         regenerate();
         updateProgress();
         validateAll();
